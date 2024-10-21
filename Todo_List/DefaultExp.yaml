@@ -1,0 +1,19 @@
+---
+DATASET:
+  # size of the images 
+  RESIZE_SHAPE: 64x64
+
+MODEL:
+  # A parameter to control model complexity 
+  # (i.e. number of trainable parameters)
+  NB_CHANNEL: 32
+  # Do not hesitate to add other parameters...
+  
+TRAINING: 
+  LEARNING_RATE: 0.001
+  EPOCH: 200
+  BATCH_SIZE: 16
+  # cpu (to run on cpu) or cuda (to run on gpu)
+  DEVICE: cpu 
+  # Do not hesitate to add other parameters...
+
