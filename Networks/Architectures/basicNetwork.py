@@ -12,6 +12,7 @@ class Net(nn.Module):
     def __init__(self, param):
         super().__init__()
         self.nb_channel = param["MODEL"]["NB_CHANNEL"]
+        # Conv2d Applies a 2D convolution over an input signal composed of several input planes.
         self.conv1 = nn.Conv2d(3, self.nb_channel, 5, padding='same')
         self.conv2 = nn.Conv2d(self.nb_channel, self.nb_channel, 5, padding='same')
         self.conv3 = nn.Conv2d(self.nb_channel, self.nb_channel, 5, padding='same')
@@ -19,6 +20,7 @@ class Net(nn.Module):
         self.sigmoid  = nn.Sigmoid()
 
     def forward(self, x):
+        # Applies element-wise
         x = F.leaky_relu(self.conv1(x))
         x = F.leaky_relu(self.conv2(x))
         x = F.leaky_relu(self.conv3(x))
