@@ -61,7 +61,7 @@ class Network_Class:
         self.model = Net(param).to(self.device)
 
         # -------------------
-        # TRAINING PARAMETERS
+        # TODO TRAINING PARAMETERS
         # -------------------
         self.criterion = ...
         self.optimizer = ... 
@@ -86,7 +86,9 @@ class Network_Class:
     # -----------------------------------
     # TRAINING LOOP (fool implementation)
     # -----------------------------------
-    def train(self): 
+    def train(self):
+        # TODO: You must write the loop to train and validate your model for a given number of epoch. At
+        #  the end of the training, you are asked to print your train and validation loss curves into a graph.
         # train for a given number of epochs
         for i in range(self.epoch):
             print("Loss at i-th epoch: ", str(np.random.random_sample()))
