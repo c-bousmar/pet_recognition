@@ -110,10 +110,15 @@ class Network_Class:
     def evaluate(self):
         self.model.train(False)
         self.model.eval()
+
+        scores = np.array([])
+        dice_scores = np.array([])
+        iou_scores = np.array([])
+
         
         # Qualitative Evaluation 
         allInputs, allPreds, allGT = [], [], []
-        for (images, GT, resizedImg) in self.testDataLoader:
+        for idx, (images, GT, resizedImg) in enumerate(self.testDataLoader):
             images      = images.to(self.device)
             predictions = self.model(images)
 
@@ -123,12 +128,29 @@ class Network_Class:
             allPreds.extend(predictions.data.numpy())
             allGT.extend(GT.data.numpy())
 
+            # For now the score is just the delta between our prediction and the ground truth for each images
+            pred_masks = (predictions.detach().numpy() >= 0.5).squeeze(1)
+            gt_masks = GT.detach().numpy()
+            scores = np.append(scores, np.sum(np.abs(gt_masks - pred_masks), axis=(1,2)).astype(int))
+            dice_scores = np.append(dice_scores, [self.dice_coefficient(pred, gt) for pred, gt in zip(pred_masks, gt_masks)])
+            iou_scores = np.append(iou_scores, [self.iou(pred, gt) for pred, gt in zip(pred_masks, gt_masks)])
+
         allInputs = np.array(allInputs)
         allPreds  = np.array(allPreds)
         allGT     = np.array(allGT)
 
-        showPredictions(allInputs, allPreds, allGT, self.resultsPath)
+        #showPredictions(allInputs, allPreds, allGT, self.resultsPath)
 
         # Quantitative Evaluation
-        # Implement this ! 
+        print(f'Mean score = {np.mean(scores)}\nMedian score = {np.median(scores)}')
+        print(f'Mean dice score = {np.mean(dice_scores)}\nMedian dice score = {np.median(dice_scores)}')
+        print(f'Mean iou score = {np.mean(iou_scores)}\nMedian iou score = {np.median(iou_scores)}')
+    
+    def dice_coefficient(self, pred_mask, gt_mask):
+        intersection = np.sum(pred_mask * gt_mask)
+        return (2 * intersection) / (np.sum(pred_mask) + np.sum(gt_mask))
 
+    def iou(self, pred_mask, gt_mask):
+        intersection = np.sum(pred_mask * gt_mask)
+        union = np.sum(pred_mask) + np.sum(gt_mask) - intersection
+        return intersection / union
