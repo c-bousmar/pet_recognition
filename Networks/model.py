@@ -10,7 +10,6 @@ import copy
 import torch
 torch.manual_seed(2885)
 from torch.utils.data import DataLoader
-from torch.utils.data import random_split
 import torch.nn as nn
 import torch.optim
 
@@ -63,8 +62,8 @@ class Network_Class:
         # -------------------
         # TODO TRAINING PARAMETERS
         # -------------------
-        self.criterion = ...
-        self.optimizer = ... 
+        self.criterion = nn.BCELoss()
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
         # ----------------------------------------------------
         # DATASET INITIALISATION (from the dataLoader.py file)
@@ -90,17 +89,66 @@ class Network_Class:
         # TODO: You must write the loop to train and validate your model for a given number of epoch. At
         #  the end of the training, you are asked to print your train and validation loss curves into a graph.
         # train for a given number of epochs
+        # for i in range(self.epoch):
+        #    print("Loss at i-th epoch: ", str(np.random.random_sample()))
+        #    modelWts = copy.deepcopy(self.model.state_dict())
+        train_losses = []
+        validations = []
+        #self.loadWeights()
         for i in range(self.epoch):
-            print("Loss at i-th epoch: ", str(np.random.random_sample()))
-            modelWts = copy.deepcopy(self.model.state_dict())
+            self.model.train(True)
+            size_train = len(self.trainDataLoader)
+            size_val = len(self.valDataLoader.dataset)
+            train_loss = 0
+            for batch_idx, (images, masks, resizedImg) in enumerate(self.trainDataLoader):
+                # Get images and associated mask
+                images, masks = images.to(self.device), masks.to(self.device),
 
-        # Print learning curves
-        # Implement this...
+                # Zero your gradients for every batch!
+                self.optimizer.zero_grad()
+
+                # Make predictions for this batch
+                predictions = self.model(images)
+                predictions = predictions.squeeze(1)
+
+                # Compute the loss and its gradients
+                loss = self.criterion(predictions, masks)
+                loss.backward()
+
+                # Adjust learning weights
+                self.optimizer.step()
+
+                train_loss += loss.item()
+            train_loss /= size_train
+            train_losses.append(train_loss)
+
+            self.model.eval()
+            correct = 0
+            with torch.no_grad():
+                for batch_idx, (images, masks, resizedImg) in enumerate(self.valDataLoader):
+                    images, masks = images.to(self.device), masks.to(self.device)
+                    predictions = self.model(images)
+                    correct += (predictions.argmax(1) == masks).type(torch.float).sum().item()
+            correct /= (size_val * masks.numel())
+            validations.append(correct)
+
+            # Print learning curves
+            # Implement this...
+            print(f"Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Accuracy: {(100*correct):>0.1f}%")
 
         # Save the model weights
+        modelWts = copy.deepcopy(self.model.state_dict())
         wghtsPath  = self.resultsPath + '/_Weights/'
         createFolder(wghtsPath)
         torch.save(modelWts, wghtsPath + '/wghts.pkl')
+
+        plt.plot(range(1, self.epoch + 1), train_losses, label='Train Loss')
+        plt.plot(range(1, self.epoch + 1), validations, label='Validation Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.title('Train and Validation Loss Curves')
+        plt.legend()
+        plt.show()
 
 
 
