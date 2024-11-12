@@ -48,7 +48,7 @@ def main(parser):
     # 2. VISUALISATION OF THE DATASET (OPTIONAL)
     # ------------------------------------------
     # Comment line below to skip the visualisation
-    showDataLoader(myNetwork.trainDataLoader, param)
+    #showDataLoader(myNetwork.trainDataLoader, param)
 
     # ------------------
     # 3. TRAIN THE MODEL  
