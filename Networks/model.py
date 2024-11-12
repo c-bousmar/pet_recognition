@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 from Dataset.dataLoader import *
 from Dataset.makeGraph import *
 from Networks.Architectures.basicNetwork import *
@@ -98,8 +100,9 @@ class Network_Class:
         for i in range(self.epoch):
             self.model.train(True)
             size_train = len(self.trainDataLoader)
-            size_val = len(self.valDataLoader.dataset)
+            size_val = len(self.valDataLoader)
             train_loss = 0
+            val_loss = 0
             for batch_idx, (images, masks, resizedImg) in enumerate(self.trainDataLoader):
                 # Get images and associated mask
                 images, masks = images.to(self.device), masks.to(self.device),
@@ -123,18 +126,19 @@ class Network_Class:
             train_losses.append(train_loss)
 
             self.model.eval()
-            correct = 0
             with torch.no_grad():
                 for batch_idx, (images, masks, resizedImg) in enumerate(self.valDataLoader):
                     images, masks = images.to(self.device), masks.to(self.device)
                     predictions = self.model(images)
-                    correct += (predictions.argmax(1) == masks).type(torch.float).sum().item()
-            correct /= (size_val * masks.numel())
-            validations.append(correct)
+                    predictions = predictions.squeeze(1)
+                    loss = self.criterion(predictions, masks)
+                    val_loss += loss.item()
+                val_loss /= size_val
+                validations.append(val_loss)
 
             # Print learning curves
             # Implement this...
-            print(f"Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Accuracy: {(100*correct):>0.1f}%")
+            print(f"Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
 
         # Save the model weights
         modelWts = copy.deepcopy(self.model.state_dict())
@@ -148,7 +152,8 @@ class Network_Class:
         plt.ylabel('Loss')
         plt.title('Train and Validation Loss Curves')
         plt.legend()
-        plt.show()
+        plt.show(self.resultsPath + '/Plots/learning_curves.png')
+        plt.savefig()
 
 
 
@@ -187,7 +192,7 @@ class Network_Class:
         allPreds  = np.array(allPreds)
         allGT     = np.array(allGT)
 
-        #showPredictions(allInputs, allPreds, allGT, self.resultsPath)
+        showPredictions(allInputs, allPreds, allGT, self.resultsPath)
 
         # Quantitative Evaluation
         print(f'Mean score = {np.mean(scores)}\nMedian score = {np.median(scores)}')
