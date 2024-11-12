@@ -3,62 +3,46 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class UNet(nn.Module):
-    def __init__(self, param):
+    def __init__(self):
         super().__init__()
-
         self.n_channels = param["MODEL"]["NB_CHANNEL"]
-        self.n_classes = param["MODEL"]["NB_CLASSES"]
-        self.bilinear = param["MODEL"]["IS_BILINEAR"]
+        self.n_classes  = param["MODEL"]["NB_CLASSES"]
 
-        self.inc = (Convolution(self.n_channels, 64))
-        self.down1 = (Downscaling(64, 128))
-        self.down2 = (Downscaling(128, 256))
-        self.down3 = (Downscaling(256, 512))
-        factor = 2 if self.bilinear else 1
-        self.down4 = (Downscaling(512, 1024 // factor))
-        self.up1 = (Upscaling(1024, 512 // factor, self.bilinear))
-        self.up2 = (Upscaling(512, 256 // factor, self.bilinear))
-        self.up3 = (Upscaling(256, 128 // factor, self.bilinear))
-        self.up4 = (Upscaling(128, 64, self.bilinear))
-        self.outc = (OutConv(64, self.n_classes))
+
+        self.dble_conv_down1 = (Downscaling(self.n_channels, 64))
+        self.dble_conv_down2 = (Downscaling(64, 128))
+        self.dble_conv_down3 = (Downscaling(128, 256))
+        self.dble_conv_down4 = (Downscaling(256, 512))
+        self.bottel_neck     = (DoubleConvolution(512, 1024))
+        self.up_dble_conv1   = (Upscaling(1024, 512))
+        self.up_dble_conv2   = (Upscaling(512, 256))
+        self.up_dble_conv3   = (Upscaling(256, 128))
+        self.up_dble_conv4   = (Upscaling(128, 64))
+        self.out             = nn.Conv2d(in_channels=64, out_channels=self.n_classes, kernel_size=1)
 
     def forward(self, x):
-        x1 = self.inc(x)
-        x2 = self.down1(x1)
-        x3 = self.down2(x2)
-        x4 = self.down3(x3)
-        x5 = self.down4(x4)
-        x = self.up1(x5, x4)
-        x = self.up2(x, x3)
-        x = self.up3(x, x2)
-        x = self.up4(x, x1)
-        logits = self.outc(x)
-        return logits
-
-    def use_checkpointing(self):
-        self.inc = torch.utils.checkpoint(self.inc)
-        self.down1 = torch.utils.checkpoint(self.down1)
-        self.down2 = torch.utils.checkpoint(self.down2)
-        self.down3 = torch.utils.checkpoint(self.down3)
-        self.down4 = torch.utils.checkpoint(self.down4)
-        self.up1 = torch.utils.checkpoint(self.up1)
-        self.up2 = torch.utils.checkpoint(self.up2)
-        self.up3 = torch.utils.checkpoint(self.up3)
-        self.up4 = torch.utils.checkpoint(self.up4)
-        self.outc = torch.utils.checkpoint(self.outc)
+        x1  = self.dble_conv_down1(x)
+        x2  = self.dble_conv_down2(x1[1])
+        x3  = self.dble_conv_down3(x2[1])
+        x4  = self.dble_conv_down4(x3[1])
+        b   = self.bottel_neck(x4[1])
+        x5  = self.up_dble_conv1(b, x4[0])
+        x6  = self.up_dble_conv2(x5, x3[0])
+        x7  = self.up_dble_conv3(x6, x2[0])
+        x8  = self.up_dble_conv4(x7, x1[0])
+        out = self.out(x8)
+        return out
     
     
-class Convolution(nn.Module):
-    def __init__(self, in_channels, out_channels, mid_channels=None):
+class DoubleConvolution(nn.Module):
+    def __init__(self, in_channels, out_channels):
         super().__init__()
-        if not mid_channels:
-            mid_channels = out_channels
         self.double_conv = nn.Sequential(
-            nn.Conv2d(in_channels, mid_channels, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(mid_channels),
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+            # nn.BatchNorm2d(mid_channels),
             nn.ReLU(inplace=True),
-            nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(out_channels),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            # nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True)
         )
 
@@ -69,40 +53,23 @@ class Convolution(nn.Module):
 class Downscaling(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
-        self.maxpool_conv = nn.Sequential(
-            nn.MaxPool2d(2),
-            Convolution(in_channels, out_channels)
-        )
+        self.conv = DoubleConvolution(in_channels, out_channels)
+        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
 
     def forward(self, x):
-        return self.maxpool_conv(x)
+        x_a = self.conv(x)
+        x_b = self.maxpool(x_a)
+        return x_a, x_b
     
 
 class Upscaling(nn.Module):
-    def __init__(self, in_channels, out_channels, bilinear=True):
+    def __init__(self, in_channels, out_channels):
         super().__init__()
 
-        if bilinear:
-            self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
-            self.conv = Convolution(in_channels, out_channels, in_channels // 2)
-        else:
-            self.up = nn.ConvTranspose2d(in_channels, in_channels // 2, kernel_size=2, stride=2)
-            self.conv = Convolution(in_channels, out_channels)
+        self.up = nn.ConvTranspose2d(in_channels, in_channels//2, kernel_size=2, stride=2)
+        self.conv = DoubleConvolution(in_channels, out_channels)
 
-    def forward(self, x1, x2):
-        x1 = self.up(x1)
-        diffY = x2.size()[2] - x1.size()[2]
-        diffX = x2.size()[3] - x1.size()[3]
-
-        x1 = F.pad(x1, [diffX // 2, diffX - diffX // 2,
-                        diffY // 2, diffY - diffY // 2])
-        x = torch.cat([x2, x1], dim=1)
-        return self.conv(x)
-
-class OutConv(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super(OutConv, self).__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
-
-    def forward(self, x):
+    def forward(self, x_a, x_b):
+        x_a = self.up(x_a)
+        x = torch.cat([x_a, x_b], 1)
         return self.conv(x)
