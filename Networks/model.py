@@ -152,8 +152,8 @@ class Network_Class:
         plt.ylabel('Loss')
         plt.title('Train and Validation Loss Curves')
         plt.legend()
-        plt.show(self.resultsPath + '/Plots/learning_curves.png')
-        plt.savefig()
+        plt.show()
+        plt.savefig(self.resultsPath + '/Plots/learning_curves.png')
 
 
 

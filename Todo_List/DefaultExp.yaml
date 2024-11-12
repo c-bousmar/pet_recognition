@@ -12,7 +12,7 @@ MODEL:
 TRAINING: 
   LEARNING_RATE: 0.001
   #EPOCH: 200 # The training process is conducted over several iterations (*epochs*)
-  EPOCH: 10
+  EPOCH: 200
   BATCH_SIZE: 16 # Number of images processed simultaneously (the number of data samples propagated through the network before the parameters are updated)
   # cpu (to run on cpu) or cuda (to run on gpu)
   DEVICE: cuda
