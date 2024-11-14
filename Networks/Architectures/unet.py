@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class UNet(nn.Module):
-    def __init__(self):
+    def __init__(self,param):
         super().__init__()
         self.n_channels = param["MODEL"]["NB_CHANNEL"]
         self.n_classes  = param["MODEL"]["NB_CLASSES"]
