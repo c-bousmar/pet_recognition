@@ -5,6 +5,10 @@ from Dataset.makeGraph import *
 from Networks.Architectures.basicNetwork import *
 
 import numpy as np
+
+from Networks.Architectures.unet import UNet
+from Networks.Architectures.unet2 import UNet2
+
 np.random.seed(2885)
 import os
 import copy
@@ -59,8 +63,8 @@ class Network_Class:
         # -----------------------------------
         # NETWORK ARCHITECTURE INITIALISATION
         # -----------------------------------
-        self.model = Net(param).to(self.device)
-
+        #self.model = Net(param).to(self.device)
+        self.model = UNet(param).to(self.device)
         # -------------------
         # TODO TRAINING PARAMETERS
         # -------------------
