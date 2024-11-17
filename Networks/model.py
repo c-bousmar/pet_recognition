@@ -64,7 +64,7 @@ class Network_Class:
         # NETWORK ARCHITECTURE INITIALISATION
         # -----------------------------------
         #self.model = Net(param).to(self.device)
-        self.model = UNet(param).to(self.device)
+        self.model = UNet2(param).to(self.device)
         # -------------------
         # TODO TRAINING PARAMETERS
         # -------------------
@@ -86,7 +86,7 @@ class Network_Class:
     # LOAD PRETRAINED WEIGHTS (to run evaluation without retraining the model...)
     # ---------------------------------------------------------------------------
     def loadWeights(self): 
-        self.model.load_state_dict(torch.load(self.resultsPath + '/_Weights/wghts.pkl'))
+        self.model.load_state_dict(torch.load(self.resultsPath + '/_Weights/wghts.pkl', weights_only=True))
 
     # -----------------------------------
     # TRAINING LOOP (fool implementation)
