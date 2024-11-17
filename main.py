@@ -54,14 +54,14 @@ def main(parser):
     # 3. TRAIN THE MODEL  
     # ------------------
     print(colored('Start to train the network', 'red'))
-    #myNetwork.train()
+    myNetwork.train()
     print(colored('The network is trained', 'red'))
     
     # ---------------------
     # 4. EVALUATE THE MODEL  
     # ---------------------  
-    myNetwork.loadWeights()
-    myNetwork.evaluate()
+    # myNetwork.loadWeights()
+    # myNetwork.evaluate()
     
 
 if __name__ == '__main__':
