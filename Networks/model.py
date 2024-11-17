@@ -8,6 +8,7 @@ import numpy as np
 
 from Networks.Architectures.unet import UNet
 from Networks.Architectures.unet2 import UNet2
+from Networks.Architectures.pspn import PSPNet
 
 np.random.seed(2885)
 import os
@@ -64,11 +65,13 @@ class Network_Class:
         # NETWORK ARCHITECTURE INITIALISATION
         # -----------------------------------
         #self.model = Net(param).to(self.device)
-        self.model = UNet2(param).to(self.device)
+        self.model = PSPNet(param).to(self.device)
+        # self.model = UNet2(param).to(self.device)
         # -------------------
         # TODO TRAINING PARAMETERS
         # -------------------
-        self.criterion = nn.BCELoss()
+        self.criterion = nn.BCEWithLogitsLoss()
+        # self.criterion = nn.BCELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
         # ----------------------------------------------------
