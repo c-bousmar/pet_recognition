@@ -9,6 +9,7 @@ import numpy as np
 from Networks.Architectures.unet import UNet
 from Networks.Architectures.unet2 import UNet2
 from Networks.Architectures.pspn import PSPNet
+from Networks.Architectures.gctx_unet import GCTx_UNet
 
 np.random.seed(2885)
 import os
@@ -20,6 +21,8 @@ from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.optim
 
+EPSILON_OVERFITTING = 0.05
+EPSILON_ACCURACY = 0.01
 
 # --------------------------------------------------------------------------------
 # CREATE A FOLDER IF IT DOES NOT EXIST
@@ -65,13 +68,14 @@ class Network_Class:
         # NETWORK ARCHITECTURE INITIALISATION
         # -----------------------------------
         #self.model = Net(param).to(self.device)
-        self.model = PSPNet(param).to(self.device)
+        # self.model = PSPNet(param).to(self.device)
         # self.model = UNet2(param).to(self.device)
+        self.model = GCTx_UNet(param).to(self.device)
         # -------------------
         # TODO TRAINING PARAMETERS
         # -------------------
-        self.criterion = nn.BCEWithLogitsLoss()
-        # self.criterion = nn.BCELoss()
+        # self.criterion = nn.BCEWithLogitsLoss()
+        self.criterion = nn.BCELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
         # ----------------------------------------------------
@@ -88,8 +92,8 @@ class Network_Class:
     # ---------------------------------------------------------------------------
     # LOAD PRETRAINED WEIGHTS (to run evaluation without retraining the model...)
     # ---------------------------------------------------------------------------
-    def loadWeights(self): 
-        self.model.load_state_dict(torch.load(self.resultsPath + '/_Weights/wghts.pkl', weights_only=True))
+    def loadWeights(self, epoch_number): 
+        self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_{epoch_number}.pkl', weights_only=True))
 
     # -----------------------------------
     # TRAINING LOOP (fool implementation)
@@ -105,6 +109,16 @@ class Network_Class:
         validations = []
         #self.loadWeights()
         for i in range(self.epoch):
+
+            # Early stopping
+            if i > 0 and \
+                validations[-1] > train_losses[-1] + EPSILON_OVERFITTING and \
+                validations[-2] - validations[-1] < EPSILON_ACCURACY:
+                print(f"Early stopping caused by overfitting or no accuracy improvement.")
+                print(f"Loss difference = {validations[-1] - train_loss[-1]}")
+                print(f"Accuracy difference = {validations[-2] - validations[-1]}")
+                break
+
             self.model.train(True)
             size_train = len(self.trainDataLoader)
             size_val = len(self.valDataLoader)
@@ -147,11 +161,11 @@ class Network_Class:
             # Implement this...
             print(f"Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
 
-        # Save the model weights
-        modelWts = copy.deepcopy(self.model.state_dict())
-        wghtsPath  = self.resultsPath + '/_Weights/'
-        createFolder(wghtsPath)
-        torch.save(modelWts, wghtsPath + '/wghts.pkl')
+            # Save the model weights
+            modelWts = copy.deepcopy(self.model.state_dict())
+            wghtsPath  = self.resultsPath + '/_Weights/'
+            createFolder(wghtsPath)
+            torch.save(modelWts, wghtsPath + f'/wghts_e{i}.pkl')
 
         plt.plot(range(1, self.epoch + 1), train_losses, label='Train Loss')
         plt.plot(range(1, self.epoch + 1), validations, label='Validation Loss')
