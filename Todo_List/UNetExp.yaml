@@ -1,7 +1,7 @@
 ---
 DATASET:
   # size of the images 
-  RESIZE_SHAPE: 256x256
+  RESIZE_SHAPE: 224x224
 
 MODEL:
   # A parameter to control model complexity 
@@ -11,7 +11,10 @@ MODEL:
   
 TRAINING: 
   LEARNING_RATE: 0.001
-  EPOCH: 100
+  EPOCH: 30
   BATCH_SIZE: 1
   # cpu (to run on cpu) or cuda (to run on gpu)
-  DEVICE: cuda 
+  DEVICE: cuda
+
+EVALUATE:
+  EPOCH_NUMBER: 12
