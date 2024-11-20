@@ -104,13 +104,12 @@ class PSPNet(nn.Module):
             nn.Conv2d(self.depth // 2, self.n_classes, kernel_size=1),
         )
 
-        # self.semantic_criterion = nn.CrossEntropyLoss(ignore_index=255, weight=None).cuda()
-        # self.auxiliary_criterion = nn.CrossEntropyLoss(ignore_index=255, weight=None).cuda()
-        self.semantic_criterion = nn.CrossEntropyLoss(ignore_index=255, weight=None)
-        self.auxiliary_criterion = nn.CrossEntropyLoss(ignore_index=255, weight=None)
+        self.semantic_criterion = nn.CrossEntropyLoss(ignore_index=255, weight=None).cuda()
+        self.auxiliary_criterion = nn.CrossEntropyLoss(ignore_index=255, weight=None).cuda()
+        # self.semantic_criterion = nn.CrossEntropyLoss(ignore_index=255, weight=None)
+        # self.auxiliary_criterion = nn.CrossEntropyLoss(ignore_index=255, weight=None)
 
     def forward(self, images, label=None):
-        # Assume images is a tensor directly
         x = images
         out = self.stem(x)
         out1 = self.block1(out)
