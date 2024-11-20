@@ -59,9 +59,9 @@ def main(parser):
     
     # ---------------------
     # 4. EVALUATE THE MODEL  
-    # ---------------------  
-    myNetwork.loadWeights()
-    myNetwork.evaluate()
+    # ---------------------
+    # myNetwork.loadWeights(param["EVALUATE"]["EPOCH_NUMBER"])
+    # myNetwork.evaluate()
     
 
 if __name__ == '__main__':
