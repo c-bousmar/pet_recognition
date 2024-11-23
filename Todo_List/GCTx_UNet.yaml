@@ -17,7 +17,7 @@ TRAINING:
   EPOCH: 30
   BATCH_SIZE: 8
   # cpu (to run on cpu) or cuda (to run on gpu)
-  DEVICE: cuda 
+  DEVICE: cpu 
 
 EVALUATE:
   EPOCH_NUMBER: 12
