@@ -107,10 +107,10 @@ class GCTx_UNet(nn.Module):
     def __init__(self, params):
         super(GCTx_UNet, self).__init__()
 
-        input_channels = params["NB_CHANNEL"]
-        num_classes = params["NB_CLASSES"]
-        encoder_stages = params["ENCODER_STAGES"]
-        decoder_stages = params["DECODER_STAGES"]
+        input_channels = params["MODEL"]["NB_CHANNEL"]
+        num_classes = params["MODEL"]["NB_CLASSES"]
+        encoder_stages = params["MODEL"]["ENCODER_STAGES"]
+        decoder_stages = params["MODEL"]["DECODER_STAGES"]
         self.gc_vit = gc_vit_tiny(embed_dim=64, num_heads=[2, 4, 8, 16], depths=[2, 2, 6, 2])
 
         self.patchify = nn.Sequential(
