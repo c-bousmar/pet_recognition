@@ -1,3 +1,4 @@
+import time
 import matplotlib.pyplot as plt
 
 from Dataset.dataLoader import *
@@ -107,9 +108,11 @@ class Network_Class:
         #    modelWts = copy.deepcopy(self.model.state_dict())
         train_losses = []
         validations = []
+        total_time = 0  # Initialize total time counter
         #self.loadWeights()
         for i in range(self.epoch):
-
+            start_time = time.time()  # Start timing the epoch
+            
             # Early stopping
             if i > 0 and train_losses[-1] < 2000.0 and validations[-1] < 2500.0 and \
                 validations[-1] > train_losses[-1] + EPSILON_OVERFITTING and \
@@ -157,6 +160,10 @@ class Network_Class:
                 val_loss /= size_val
                 validations.append(val_loss)
 
+            # End timing the epoch
+            epoch_time = time.time() - start_time
+            total_time += epoch_time
+
             # Print learning curves
             # Implement this...
             print(f"Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
@@ -166,6 +173,10 @@ class Network_Class:
             wghtsPath  = self.resultsPath + '/_Weights/'
             createFolder(wghtsPath)
             torch.save(modelWts, wghtsPath + f'/wghts_e{i+1}.pkl')
+
+        # Print the average epoch time
+        avg_time = total_time / self.epoch
+        print(f"Average time per epoch: {avg_time:.2f} seconds")
 
         plt.plot(range(1, self.epoch + 1), train_losses, label='Train Loss')
         plt.plot(range(1, self.epoch + 1), validations, label='Validation Loss')
