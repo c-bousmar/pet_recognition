@@ -22,7 +22,7 @@ def gc_vit_tiny(dimensions, heads, in_channels, pretrained=True):
 
 import torch
 import torch.nn as nn
-from timm.models.layers import trunc_normal_, DropPath, to_2tuple
+from timm.layers import trunc_normal_, DropPath, to_2tuple
 from timm.models._registry import register_model
 from timm.models._builder import build_model_with_cfg
 
