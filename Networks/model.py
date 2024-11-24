@@ -191,19 +191,21 @@ class Network_Class:
 
         
         # Qualitative Evaluation 
-        allInputs, allPreds, allGT = [], [], []
+        allInputs, allPreds, allGT, allPredsTresh = [], [], [], []
         for idx, (images, GT, resizedImg) in enumerate(self.testDataLoader):
             images      = images.to(self.device)
             predictions = self.model(images)
 
             images, predictions = images.to('cpu'), predictions.to('cpu')
+            pred_masks = (predictions.detach().numpy() >= 0.5).squeeze(1)
+
 
             allInputs.extend(resizedImg.data.numpy())
             allPreds.extend(predictions.data.numpy())
             allGT.extend(GT.data.numpy())
+            allPredsTresh.extend(pred_masks)
 
             # For now the score is just the delta between our prediction and the ground truth for each images
-            pred_masks = (predictions.detach().numpy() >= 0.5).squeeze(1)
             gt_masks = GT.detach().numpy()
             scores = np.append(scores, np.sum(np.abs(gt_masks - pred_masks), axis=(1,2)).astype(int))
             dice_scores = np.append(dice_scores, [self.dice_coefficient(pred, gt) for pred, gt in zip(pred_masks, gt_masks)])
@@ -212,8 +214,9 @@ class Network_Class:
         allInputs = np.array(allInputs)
         allPreds  = np.array(allPreds)
         allGT     = np.array(allGT)
+        allPredsTresh = np.array(allPredsTresh)
 
-        showPredictions(allInputs, allPreds, allGT, self.resultsPath)
+        showPredictions(allInputs, allPreds, allGT, allPredsTresh, self.resultsPath)
 
         # Quantitative Evaluation
         print(f'Mean score = {np.mean(scores)}\nMedian score = {np.median(scores)}')

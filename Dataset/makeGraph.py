@@ -49,8 +49,8 @@ def showDataLoader(dataLoader, param):
 #                  (depth x width)
 #     - filePath (str): path to save the image file
 # --------------------------------------------------------------------------------
-def singlePrediction(img, pred, GT, filePath): 
-    figure, ax = plt.subplots(1, 3, figsize=(15, 5))
+def singlePrediction(img, pred, GT, predTresh, filePath):
+    figure, ax = plt.subplots(1, 4, figsize=(15, 5))
 
     ax[0].imshow(img.transpose((1, 2, 0)))
     ax[0].set_title("Input")
@@ -64,6 +64,10 @@ def singlePrediction(img, pred, GT, filePath):
     ax[2].set_title("Prediction")
     ax[2].set_axis_off()
 
+    ax[3].imshow(np.squeeze(predTresh) * 255, interpolation="nearest")
+    ax[3].set_title("Prediction with treshold")
+    ax[3].set_axis_off()
+
     plt.tight_layout()
     plt.savefig(filePath)
     plt.close()
@@ -76,12 +80,12 @@ def singlePrediction(img, pred, GT, filePath):
 #     - allGT (list): list of 2D numpy arrays containing the ground truth masks 
 #     - resultPath (str): path to folder in which to save the image files
 # --------------------------------------------------------------------------------
-def showPredictions(allInputs, allPreds, allGT, resultPath):
+def showPredictions(allInputs, allPreds, allGT, allPredsTresh, resultPath):
     idx = 0
-    for (img, pred, GT) in zip(allInputs, allPreds, allGT): 
+    for (img, pred, GT, predTresh) in zip(allInputs, allPreds, allGT, allPredsTresh):
         filePath = os.path.join(resultPath, "Test", str(idx))
         createFolder(os.path.join(resultPath, "Test"))
-        singlePrediction(img, pred, GT, filePath)
+        singlePrediction(img, pred, GT, predTresh, filePath)
         if idx > 30: 
             break
         idx += 1
