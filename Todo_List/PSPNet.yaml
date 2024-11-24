@@ -10,14 +10,14 @@ MODEL:
   NB_CLASSES: 1
   # NB_CLASSES: 21
   OUT_CHANNELS: 2048
-  IMAGE_SIZE: 224
   
 TRAINING: 
   LEARNING_RATE: 0.01
-  EPOCH: 100
+  EPOCH: 3
   BATCH_SIZE: 8
   # cpu (to run on cpu) or cuda (to run on gpu)
   DEVICE: cuda
 
 EVALUATE:
+  IMAGE_SIZE: 224
   EPOCH_NUMBER: 13
