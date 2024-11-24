@@ -68,14 +68,14 @@ class Network_Class:
         # NETWORK ARCHITECTURE INITIALISATION
         # -----------------------------------
         #self.model = Net(param).to(self.device)
-        # self.model = PSPNet(param).to(self.device)
+        self.model = PSPNet(param).to(self.device)
         # self.model = UNet2(param).to(self.device)
-        self.model = GCTx_UNet(param).to(self.device)
+        # self.model = GCTx_UNet(param).to(self.device)
         # -------------------
         # TODO TRAINING PARAMETERS
         # -------------------
-        # self.criterion = nn.BCEWithLogitsLoss()
-        self.criterion = nn.BCELoss()
+        self.criterion = nn.BCEWithLogitsLoss()
+        # self.criterion = nn.BCELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
         # ----------------------------------------------------
@@ -93,7 +93,7 @@ class Network_Class:
     # LOAD PRETRAINED WEIGHTS (to run evaluation without retraining the model...)
     # ---------------------------------------------------------------------------
     def loadWeights(self, epoch_number): 
-        self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_{epoch_number}.pkl', weights_only=True))
+        self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e{epoch_number}.pkl', weights_only=True))
 
     # -----------------------------------
     # TRAINING LOOP (fool implementation)
@@ -111,11 +111,11 @@ class Network_Class:
         for i in range(self.epoch):
 
             # Early stopping
-            if i > 0 and \
+            if i > 0 and train_losses[-1] < 2000.0 and validations[-1] < 2500.0 and \
                 validations[-1] > train_losses[-1] + EPSILON_OVERFITTING and \
                 validations[-2] - validations[-1] < EPSILON_ACCURACY:
                 print(f"Early stopping caused by overfitting or no accuracy improvement.")
-                print(f"Loss difference = {validations[-1] - train_loss[-1]}")
+                print(f"Loss difference = {validations[-1] - train_losses[-1]}")
                 print(f"Accuracy difference = {validations[-2] - validations[-1]}")
                 break
 
@@ -165,7 +165,7 @@ class Network_Class:
             modelWts = copy.deepcopy(self.model.state_dict())
             wghtsPath  = self.resultsPath + '/_Weights/'
             createFolder(wghtsPath)
-            torch.save(modelWts, wghtsPath + f'/wghts_e{i}.pkl')
+            torch.save(modelWts, wghtsPath + f'/wghts_e{i+1}.pkl')
 
         plt.plot(range(1, self.epoch + 1), train_losses, label='Train Loss')
         plt.plot(range(1, self.epoch + 1), validations, label='Validation Loss')
