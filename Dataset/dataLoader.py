@@ -92,7 +92,11 @@ class OxfordPetDataset(Dataset):
 # Do not hesitate to consider other useful transforms!
 # -----------------------------------------------------------------------
 def getTransforms_train(param): 
-    imgTransformsList = [alb.Resize(height = int(param["DATASET"]["RESIZE_SHAPE"].split("x")[0]), 
+    imgTransformsList = [
+        #alb.HorizontalFlip(p=0.5),
+        #alb.VerticalFlip(p=0.5),
+        #alb.Rotate(limit=30, p=0.5),
+        alb.Resize(height = int(param["DATASET"]["RESIZE_SHAPE"].split("x")[0]),
                                     width  = int(param["DATASET"]["RESIZE_SHAPE"].split("x")[1])), 
                          alb.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)), 
                          alb.pytorch.transforms.ToTensorV2(), 
