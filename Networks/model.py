@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 
 from Dataset.dataLoader import *
 from Dataset.makeGraph import *
-from Networks.Architectures.basicNetwork import *
 
 import numpy as np
 
+from Networks.Architectures.basicNetwork import Net
 from Networks.Architectures.unet import UNet
 from Networks.Architectures.unet2 import UNet2
 from Networks.Architectures.pspn import PSPNet
@@ -21,6 +21,7 @@ torch.manual_seed(2885)
 from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.optim
+import torch_optimizer
 
 EPSILON_OVERFITTING = 0.05
 EPSILON_ACCURACY = 0.01
@@ -71,14 +72,17 @@ class Network_Class:
         # -----------------------------------
         # self.model = Net(param).to(self.device)
         # self.model = PSPNet(param).to(self.device)
-        self.model = UNet2(param).to(self.device)
-        # self.model = GCTx_UNet(param).to(self.device)
+        # self.model = UNet2(param).to(self.device)
+        self.model = GCTx_UNet(param).to(self.device)
         # -------------------
         # TODO TRAINING PARAMETERS
         # -------------------
         # self.criterion = nn.BCEWithLogitsLoss()
         self.criterion = nn.BCELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
+        # self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr)
+        # self.optimizer = torch_optimizer.Adahessian(self.model.parameters(), lr=self.lr)
+        # self.optimizer = torch_optimizer.Yogi(self.model.parameters(), lr=self.lr)
 
         # ----------------------------------------------------
         # DATASET INITIALISATION (from the dataLoader.py file)
