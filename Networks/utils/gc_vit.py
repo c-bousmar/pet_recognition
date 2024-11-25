@@ -1,11 +1,11 @@
 import torch
 
 
-def gc_vit_tiny(dimensions, heads, in_channels, pretrained=True):
+def gc_vit_tiny(pretrained=True):
     """GC-ViT Tiny variant."""
-    model = GCViTBlock(dim=dimensions, num_heads=heads, input_res=in_channels)
+    model = GCViT()
     if pretrained:
-        model.load_state_dict(torch.load('pretrained/gcvit.pth'))
+        model.load_state_dict(torch.load('pretrained/GCViT_tiny.pth.tar'))
     return model
 
 #!/usr/bin/env python3

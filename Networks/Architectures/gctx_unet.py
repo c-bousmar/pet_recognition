@@ -111,15 +111,15 @@ class GCTx_UNet(nn.Module):
         num_classes = params["MODEL"]["NB_CLASSES"]
         encoder_stages = params["MODEL"]["ENCODER_STAGES"]
         decoder_stages = params["MODEL"]["DECODER_STAGES"]
-        self.gc_vit = gc_vit_tiny(embed_dim=64, num_heads=[2, 4, 8, 16], depths=[2, 2, 6, 2])
+        self.gc_vit = gc_vit_tiny()
 
         self.patchify = nn.Sequential(
             nn.Conv2d(input_channels, encoder_stages[0], kernel_size=3, stride=2, padding=1),
             nn.Conv2d(encoder_stages[0], encoder_stages[0], kernel_size=3, padding=1)
         )
-        self.encoder = Encoder(encoder_stages, self.gc_vit_block)
-        self.bottleneck = Bottleneck(encoder_stages[-1], self.gc_vit_block)
-        self.decoder = Decoder(decoder_stages, encoder_stages[-1], self.gc_vit_block)
+        self.encoder = Encoder(encoder_stages, self.gc_vit)
+        self.bottleneck = Bottleneck(self.gc_vit)
+        self.decoder = Decoder(decoder_stages, encoder_stages[-1], self.gc_vit)
         self.final_upsample = nn.ConvTranspose2d(decoder_stages[-1], decoder_stages[-1], kernel_size=2, stride=2)
         self.output_layer = nn.Conv2d(decoder_stages[-1], num_classes, kernel_size=1)
 
