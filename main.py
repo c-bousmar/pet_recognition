@@ -34,7 +34,7 @@ def main(parser):
     # 0. INITIALISATION 
     # -----------------
     # Read the yaml configuration file 
-    stream = open('Todo_List/' + parser.exp + '.yaml', 'r')
+    stream = open('Configs/' + parser.exp + '.yaml', 'r')
     param  = yaml.safe_load(stream)
     # Path to the folder that will contain results of the experiment 
     resultsPath = os.path.join(rootDirectory, "Results", parser.exp)
