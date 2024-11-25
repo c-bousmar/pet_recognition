@@ -171,6 +171,9 @@ class Network_Class:
             # Print learning curves
             # Implement this...
             print(f"Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
+            # Open the file in append mode and write the epoch information
+            with open(os.path.join(self.resultsPath, 'res_epoch.txt'), 'a') as f:
+                f.write(f"Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}\n")
 
             # Save the model weights
             modelWts = copy.deepcopy(self.model.state_dict())
@@ -234,15 +237,42 @@ class Network_Class:
         showPredictions(allInputs, allPreds, allGT, allPredsTresh, self.resultsPath)
 
         # Quantitative Evaluation
+        mean_score = np.mean(scores)
+        median_score = np.median(scores)
+
         total_pixels = self.image_size * self.image_size
         pixel_accuracies = [(score / total_pixels) * 100 for score in scores]
-        print(f'Mean score = {np.mean(scores)}\nMedian score = {np.median(scores)}')
+        mean_pixel_accuracy = 100.0 - np.mean(pixel_accuracies)
+        median_pixel_accuracy = 100.0 - np.median(pixel_accuracies)
+        std_pixel_accuracy = np.std(pixel_accuracies)
+
+        mean_dice_score = np.mean(dice_scores)
+        median_dice_score = np.median(dice_scores)
+        std_dice_score = np.std(dice_scores)
+
+        mean_iou_score = np.mean(iou_scores)
+        median_iou_score = np.median(iou_scores)
+        std_iou_score = np.std(iou_scores)
+
+        # Display the results
+        print(f'Mean score = {mean_score}\nMedian score = {median_score}')
+        print(f'Mean Pixel Accuracy = {mean_pixel_accuracy}%\nMedian Pixel Accuracy = {median_pixel_accuracy}%\nSTD Pixel Accuracy = {std_pixel_accuracy}%')
+        print(f'Mean dice score = {mean_dice_score}\nMedian dice score = {median_dice_score}\nSTD dice score = {std_dice_score}')
+        print(f'Mean IoU score = {mean_iou_score}\nMedian IoU score = {median_iou_score}\nSTD IoU score = {std_iou_score}')
         
-        print(f'Mean Pixel Accuracy = {100.0 - np.mean(pixel_accuracies):.2f}%')
-        print(f'Median Pixel Accuracy = {100.0 - np.median(pixel_accuracies):.2f}%')
-        print(f'STD Pixel Accuracy = {np.std(pixel_accuracies):.2f}%')
-        print(f'Mean dice score = {np.mean(dice_scores)}\nMedian dice score = {np.median(dice_scores)}\nSTD dice score = {np.std(dice_scores)}')
-        print(f'Mean IoU score = {np.mean(iou_scores)}\nMedian IoU score = {np.median(iou_scores)}\nSTD IoU score = {np.std(iou_scores)}')
+        # Write to the file in append mode
+        with open(os.path.join(self.resultsPath, 'res_scores.txt'), 'a') as f:
+            f.write(f"Mean score = {mean_score}\n")
+            f.write(f"Median score = {median_score}\n")
+            f.write(f"Mean Pixel Accuracy = {mean_pixel_accuracy:.2f}%\n")
+            f.write(f"Median Pixel Accuracy = {median_pixel_accuracy:.2f}%\n")
+            f.write(f"STD Pixel Accuracy = {std_pixel_accuracy:.2f}%\n")
+            f.write(f"Mean dice score = {mean_dice_score}\n")
+            f.write(f"Median dice score = {median_dice_score}\n")
+            f.write(f"STD dice score = {std_dice_score}\n")
+            f.write(f"Mean IoU score = {mean_iou_score}\n")
+            f.write(f"Median IoU score = {median_iou_score}\n")
+            f.write(f"STD IoU score = {std_iou_score}\n")
     
     def dice_coefficient(self, pred_mask, gt_mask):
         intersection = np.sum(pred_mask * gt_mask)
