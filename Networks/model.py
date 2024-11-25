@@ -8,7 +8,6 @@ import numpy as np
 
 from Networks.Architectures.basicNetwork import Net
 from Networks.Architectures.unet import UNet
-from Networks.Architectures.unet2 import UNet2
 from Networks.Architectures.pspn import PSPNet
 from Networks.Architectures.gctx_unet import GCTx_UNet
 
@@ -72,7 +71,7 @@ class Network_Class:
         # -----------------------------------
         # self.model = Net(param).to(self.device)
         # self.model = PSPNet(param).to(self.device)
-        self.model = UNet2(param).to(self.device)
+        self.model = UNet(param).to(self.device)
         # self.model = GCTx_UNet(param).to(self.device)
         # -------------------
         # TODO TRAINING PARAMETERS
