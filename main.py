@@ -53,9 +53,9 @@ def main(parser):
     # ------------------
     # 3. TRAIN THE MODEL  
     # ------------------
-    # print(colored('Start to train the network', 'red'))
-    # myNetwork.train()
-    # print(colored('The network is trained', 'red'))
+    print(colored('Start to train the network', 'red'))
+    myNetwork.train()
+    print(colored('The network is trained', 'red'))
     
     # ---------------------
     # 4. EVALUATE THE MODEL  
