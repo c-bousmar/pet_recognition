@@ -1,0 +1,11 @@
+Mean score = 9237.148734177215
+Median score = 8454.0
+Mean Pixel Accuracy = 81.59%
+Median Pixel Accuracy = 83.15%        
+STD Pixel Accuracy = 9.62%
+Mean dice score = 0.7595792836903135  
+Median dice score = 0.7905238844523244
+STD dice score = 0.1339215963527087   
+Mean IoU score = 0.6288833696842334   
+Median IoU score = 0.6536085304752308 
+STD IoU score = 0.15519763200654993

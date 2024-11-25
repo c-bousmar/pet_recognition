@@ -8,7 +8,6 @@ import numpy as np
 
 from Networks.Architectures.basicNetwork import Net
 from Networks.Architectures.unet import UNet
-from Networks.Architectures.unet2 import UNet2
 from Networks.Architectures.pspn import PSPNet
 from Networks.Architectures.gctx_unet import GCTx_UNet
 
@@ -72,8 +71,8 @@ class Network_Class:
         # -----------------------------------
         # self.model = Net(param).to(self.device)
         # self.model = PSPNet(param).to(self.device)
-        # self.model = UNet2(param).to(self.device)
-        self.model = GCTx_UNet(param).to(self.device)
+        self.model = UNet(param).to(self.device)
+        # self.model = GCTx_UNet(param).to(self.device)
         # -------------------
         # TODO TRAINING PARAMETERS
         # -------------------
@@ -183,14 +182,14 @@ class Network_Class:
         avg_time = total_time / self.epoch
         print(f"Average time per epoch: {avg_time:.2f} seconds")
 
-        plt.plot(range(1, self.epoch + 1), train_losses, label='Train Loss')
-        plt.plot(range(1, self.epoch + 1), validations, label='Validation Loss')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.title('Train and Validation Loss Curves')
-        plt.legend()
-        plt.show()
-        plt.savefig(self.resultsPath + '/Plots/learning_curves.png')
+        # plt.plot(range(1, self.epoch + 1), train_losses, label='Train Loss')
+        # plt.plot(range(1, self.epoch + 1), validations, label='Validation Loss')
+        # plt.xlabel('Epoch')
+        # plt.ylabel('Loss')
+        # plt.title('Train and Validation Loss Curves')
+        # plt.legend()
+        # plt.show()
+        # plt.savefig(self.resultsPath + '/Plots/learning_curves.png')
 
 
 
@@ -238,9 +237,12 @@ class Network_Class:
         total_pixels = self.image_size * self.image_size
         pixel_accuracies = [(score / total_pixels) * 100 for score in scores]
         print(f'Mean score = {np.mean(scores)}\nMedian score = {np.median(scores)}')
-        print(f'Mean Pixel Accuracy = {100.0 - np.mean(pixel_accuracies):.2f}%\nMedian Pixel Accuracy = {100.0 - np.median(pixel_accuracies):.2f}%')
-        print(f'Mean dice score = {np.mean(dice_scores)}\nMedian dice score = {np.median(dice_scores)}')
-        print(f'Mean iou score = {np.mean(iou_scores)}\nMedian iou score = {np.median(iou_scores)}')
+        
+        print(f'Mean Pixel Accuracy = {100.0 - np.mean(pixel_accuracies):.2f}%')
+        print(f'Median Pixel Accuracy = {100.0 - np.median(pixel_accuracies):.2f}%')
+        print(f'STD Pixel Accuracy = {np.std(pixel_accuracies):.2f}%')
+        print(f'Mean dice score = {np.mean(dice_scores)}\nMedian dice score = {np.median(dice_scores)}\nSTD dice score = {np.std(dice_scores)}')
+        print(f'Mean IoU score = {np.mean(iou_scores)}\nMedian IoU score = {np.median(iou_scores)}\nSTD IoU score = {np.std(iou_scores)}')
     
     def dice_coefficient(self, pred_mask, gt_mask):
         intersection = np.sum(pred_mask * gt_mask)

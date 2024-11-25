@@ -36,7 +36,7 @@ class DownloadProgressBar(tqdm):
 
 
 def download_model(url, id):
-    download_url = './Networs/utils/pretrained'
+    download_url = './Networks/utils/pretrained'
     if not os.path.isdir(download_url):
         os.mkdir(download_url)
     if not os.path.isfile(os.path.join(download_url, id)):

@@ -1,5 +1,5 @@
-Results/
-weight/
+Networks/utils/pretrained/
+*_Weights/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -34,7 +34,7 @@ def main(parser):
     # 0. INITIALISATION 
     # -----------------
     # Read the yaml configuration file 
-    stream = open('Todo_List/' + parser.exp + '.yaml', 'r')
+    stream = open('Configs/' + parser.exp + '.yaml', 'r')
     param  = yaml.safe_load(stream)
     # Path to the folder that will contain results of the experiment 
     resultsPath = os.path.join(rootDirectory, "Results", parser.exp)
@@ -53,9 +53,9 @@ def main(parser):
     # ------------------
     # 3. TRAIN THE MODEL  
     # ------------------
-    # print(colored('Start to train the network', 'red'))
-    # myNetwork.train()
-    # print(colored('The network is trained', 'red'))
+    print(colored('Start to train the network', 'red'))
+    myNetwork.train()
+    print(colored('The network is trained', 'red'))
     
     # ---------------------
     # 4. EVALUATE THE MODEL  
