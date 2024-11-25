@@ -1,11 +1,19 @@
 import torch
 
 
-def gc_vit_tiny(pretrained=True):
+def gc_vit_tiny(pretrained=False, in_chans=3):
     """GC-ViT Tiny variant."""
-    model = GCViT()
+    model = GCViT(
+        in_chans=in_chans,
+        depths=[3, 4, 19, 5],
+        num_heads=[2, 4, 8, 16],
+        window_size=[7, 7, 14, 7],
+        dim=64,
+        mlp_ratio=3,
+    )
     if pretrained:
-        model.load_state_dict(torch.load('pretrained/GCViT_tiny.pth.tar'))
+        state_dict = torch.load('pretrained/GCViT_tiny.pth.tar')
+        model.load_state_dict(state_dict, strict=False)  # Load weights
     return model
 
 #!/usr/bin/env python3
@@ -257,20 +265,14 @@ class ReduceSize(nn.Module):
 
 
 class PatchEmbed(nn.Module):
-    """
-    Patch embedding block based on: "Hatamizadeh et al.,
-    Global Context Vision Transformers <https://arxiv.org/abs/2206.09959>"
-    """
-
-    def __init__(self, in_chans=3, dim=96):
+    def __init__(self, in_chans, dim):
         """
         Args:
             in_chans: number of input channels.
-            dim: feature size dimension.
+            dim: output embedding dimension.
         """
-
         super().__init__()
-        self.proj = nn.Conv2d(in_chans, dim, 3, 2, 1)
+        self.proj = nn.Conv2d(in_chans, dim, kernel_size=3, stride=2, padding=1)
         self.conv_down = ReduceSize(dim=dim, keep_dim=True)
 
     def forward(self, x):
@@ -763,10 +765,13 @@ class GCViT(nn.Module):
         return {'rpb'}
 
     def forward_features(self, x):
+        print(f"Input to forward_features: {x.shape}")
         x = self.patch_embed(x)
+        print(f"After patch_embed: {x.shape}")
         x = self.pos_drop(x)
 
-        for level in self.levels:
+        for i, level in enumerate(self.levels):
+            print(f"Input to level {i}: {x.shape}")
             x = level(x)
 
         x = self.norm(x)
@@ -823,16 +828,18 @@ def gc_vit_xtiny(pretrained=False, **kwargs) -> GCViT:
 
 
 @register_model
-def gc_vit_tiny(pretrained=False, **kwargs) -> GCViT:
+def gc_vit_tiny(pretrained=False, in_chans=3, **kwargs) -> GCViT:
     drop_path_rate = kwargs.pop("drop_path_rate", 0.2)
-    model_kwargs = dict(depths=[3, 4, 19, 5],
-                        num_heads=[2, 4, 8, 16],
-                        window_size=[7, 7, 14, 7],
-                        dim=64,
-                        mlp_ratio=3,
-                        drop_path_rate=drop_path_rate,
-                        **kwargs
-                        )
+    model_kwargs = dict(
+        depths=[3, 4, 19, 5],
+        num_heads=[2, 4, 8, 16],
+        window_size=[7, 7, 14, 7],
+        dim=64,
+        mlp_ratio=3,
+        drop_path_rate=drop_path_rate,
+        in_chans=in_chans,  # Pass input channels dynamically
+        **kwargs
+    )
     model = _create_gc_vit('gc_vit_tiny', pretrained=pretrained, **model_kwargs)
     return model
 

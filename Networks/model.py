@@ -71,8 +71,8 @@ class Network_Class:
         # -----------------------------------
         # self.model = Net(param).to(self.device)
         # self.model = PSPNet(param).to(self.device)
-        self.model = UNet(param).to(self.device)
-        # self.model = GCTx_UNet(param).to(self.device)
+        # self.model = UNet(param).to(self.device)
+        self.model = GCTx_UNet(param).to(self.device)
         # -------------------
         # TODO TRAINING PARAMETERS
         # -------------------
