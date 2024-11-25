@@ -11,11 +11,11 @@ MODEL:
   
 TRAINING: 
   LEARNING_RATE: 0.001
-  EPOCH: 100
+  EPOCH: 20
   BATCH_SIZE: 8
   # cpu (to run on cpu) or cuda (to run on gpu)
   DEVICE: cuda
 
 EVALUATE:
   IMAGE_SIZE: 224
-  EPOCH_NUMBER: 12
+  EPOCH_NUMBER: 10

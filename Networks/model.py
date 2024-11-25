@@ -118,13 +118,13 @@ class Network_Class:
             start_time = time.time()  # Start timing the epoch
             
             # Early stopping
-            if i > 0 and train_losses[-1] < 2000.0 and validations[-1] < 2500.0 and \
-                validations[-1] > train_losses[-1] + EPSILON_OVERFITTING and \
-                validations[-2] - validations[-1] < EPSILON_ACCURACY:
-                print(f"Early stopping caused by overfitting or no accuracy improvement.")
-                print(f"Loss difference = {validations[-1] - train_losses[-1]}")
-                print(f"Accuracy difference = {validations[-2] - validations[-1]}")
-                break
+            # if i > 0 and train_losses[-1] < 2000.0 and validations[-1] < 2500.0 and \
+            #     validations[-1] > train_losses[-1] + EPSILON_OVERFITTING and \
+            #     validations[-2] - validations[-1] < EPSILON_ACCURACY:
+            #     print(f"Early stopping caused by overfitting or no accuracy improvement.")
+            #     print(f"Loss difference = {validations[-1] - train_losses[-1]}")
+            #     print(f"Accuracy difference = {validations[-2] - validations[-1]}")
+            #     break
 
             self.model.train(True)
             size_train = len(self.trainDataLoader)
