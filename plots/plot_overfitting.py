@@ -37,7 +37,7 @@ plt.fill_between(data.index, data["Validation Loss Smooth"] - data["Validation L
                  color='orange', alpha=0.2)
 
 # Adding a vertical line at a specific x-value (e.g., x=50)
-specific_x_value = 47  # Replace this value with your desired x-value
+specific_x_value = 10  # Replace this value with your desired x-value
 plt.axvline(x=specific_x_value, color='red', linestyle='--', label=f'Selected epoch: {specific_x_value}')
 
 # Labeling the axes and the plot
