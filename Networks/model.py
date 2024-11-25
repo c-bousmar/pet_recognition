@@ -64,20 +64,20 @@ class Network_Class:
         self.device        = param["TRAINING"]["DEVICE"]
         self.lr            = param["TRAINING"]["LEARNING_RATE"]
         self.batchSize     = param["TRAINING"]["BATCH_SIZE"]
-        self.image_size    = param["MODEL"]["IMAGE_SIZE"]
+        self.image_size    = param["EVALUATE"]["IMAGE_SIZE"]
 
         # -----------------------------------
         # NETWORK ARCHITECTURE INITIALISATION
         # -----------------------------------
-        #self.model = Net(param).to(self.device)
-        self.model = PSPNet(param).to(self.device)
-        # self.model = UNet2(param).to(self.device)
+        # self.model = Net(param).to(self.device)
+        # self.model = PSPNet(param).to(self.device)
+        self.model = UNet2(param).to(self.device)
         # self.model = GCTx_UNet(param).to(self.device)
         # -------------------
         # TODO TRAINING PARAMETERS
         # -------------------
-        self.criterion = nn.BCEWithLogitsLoss()
-        # self.criterion = nn.BCELoss()
+        # self.criterion = nn.BCEWithLogitsLoss()
+        self.criterion = nn.BCELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
         # ----------------------------------------------------
@@ -231,10 +231,10 @@ class Network_Class:
         showPredictions(allInputs, allPreds, allGT, allPredsTresh, self.resultsPath)
 
         # Quantitative Evaluation
-        total_pixels = self.model.image_size * self.model.image_size
-        pixel_accuracies = 100.0 - [(score / total_pixels) * 100 for score in scores]
+        total_pixels = self.image_size * self.image_size
+        pixel_accuracies = [(score / total_pixels) * 100 for score in scores]
         print(f'Mean score = {np.mean(scores)}\nMedian score = {np.median(scores)}')
-        print(f'Mean Pixel Accuracy = {np.mean(pixel_accuracies):.2f}%\nMedian Pixel Accuracy = {np.median(pixel_accuracies):.2f}%')
+        print(f'Mean Pixel Accuracy = {100.0 - np.mean(pixel_accuracies):.2f}%\nMedian Pixel Accuracy = {100.0 - np.median(pixel_accuracies):.2f}%')
         print(f'Mean dice score = {np.mean(dice_scores)}\nMedian dice score = {np.median(dice_scores)}')
         print(f'Mean iou score = {np.mean(iou_scores)}\nMedian iou score = {np.median(iou_scores)}')
     

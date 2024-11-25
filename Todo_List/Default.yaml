@@ -8,15 +8,15 @@ MODEL:
   # (i.e. number of trainable parameters)
   NB_CHANNEL: 32
   # Do not hesitate to add other parameters...
-  IMAGE_SIZE: 224
  
 TRAINING: 
   LEARNING_RATE: 0.001
-  EPOCH: 100
+  EPOCH: 3
   BATCH_SIZE: 16
   # cpu (to run on cpu) or cuda (to run on gpu)
   DEVICE: cuda 
   # Do not hesitate to add other parameters...
 
 EVALUATE:
+  IMAGE_SIZE: 224
   EPOCH_NUMBER: 47
