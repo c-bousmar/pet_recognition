@@ -93,8 +93,6 @@ class OxfordPetDataset(Dataset):
 # -----------------------------------------------------------------------
 def getTransforms_train(param): 
     imgTransformsList = [
-        #alb.HorizontalFlip(p=0.5),
-        #alb.Rotate(limit=30, p=0.5),
         alb.Resize(height = int(param["DATASET"]["RESIZE_SHAPE"].split("x")[0]),
                                     width  = int(param["DATASET"]["RESIZE_SHAPE"].split("x")[1])), 
                          alb.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)), 
@@ -102,10 +100,10 @@ def getTransforms_train(param):
                         ]
     return alb.Compose(imgTransformsList)
 
-def getTransforms_val_test(param): 
-    imgTransformsList = [alb.Resize(height = int(param["DATASET"]["RESIZE_SHAPE"].split("x")[0]), 
-                                    width  = int(param["DATASET"]["RESIZE_SHAPE"].split("x")[1])), 
-                         alb.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),  
-                         alb.pytorch.transforms.ToTensorV2(), 
+def getTransforms_val_test(param):
+    imgTransformsList = [alb.Resize(height = int(param["DATASET"]["RESIZE_SHAPE"].split("x")[0]),
+                                    width  = int(param["DATASET"]["RESIZE_SHAPE"].split("x")[1])),
+                         alb.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+                         alb.pytorch.transforms.ToTensorV2(),
                         ]
     return alb.Compose(imgTransformsList)

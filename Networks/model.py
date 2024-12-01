@@ -5,11 +5,13 @@ from Dataset.dataLoader import *
 from Dataset.makeGraph import *
 
 import numpy as np
+import albumentations.pytorch
+import albumentations as alb
 
-from Networks.Architectures.basicNetwork import Net
+#from Networks.Architectures.basicNetwork import Net
 from Networks.Architectures.unet import UNet
 from Networks.Architectures.pspn import PSPNet
-from Networks.Architectures.gctx_unet import GCTx_UNet
+#from Networks.Architectures.gctx_unet import GCTx_UNet
 
 np.random.seed(2885)
 import os
@@ -20,7 +22,7 @@ torch.manual_seed(2885)
 from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.optim
-import torch_optimizer
+#import torch_optimizer
 
 EPSILON_OVERFITTING = 0.05
 EPSILON_ACCURACY = 0.01
@@ -70,13 +72,13 @@ class Network_Class:
         # NETWORK ARCHITECTURE INITIALISATION
         # -----------------------------------
         # self.model = Net(param).to(self.device)
-        # self.model = PSPNet(param).to(self.device)
-        # self.model = UNet(param).to(self.device)
-        self.model = GCTx_UNet(param).to(self.device)
+        #self.model = PSPNet(param).to(self.device)
+        self.model = UNet(param).to(self.device)
+        #self.model = GCTx_UNet(param).to(self.device)
         # -------------------
         # TODO TRAINING PARAMETERS
         # -------------------
-        # self.criterion = nn.BCEWithLogitsLoss()
+        #self.criterion = nn.BCEWithLogitsLoss()
         self.criterion = nn.BCELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
         # self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr)
@@ -207,13 +209,45 @@ class Network_Class:
         scores = np.array([])
         dice_scores = np.array([])
         iou_scores = np.array([])
+        uncertainty_maps = []
+
+        tta_transforms = [
+            alb.Compose([alb.HorizontalFlip(p=1), alb.pytorch.transforms.ToTensorV2()]),
+            alb.Compose([alb.VerticalFlip(p=1), alb.pytorch.transforms.ToTensorV2()]),
+        ]
 
         
         # Qualitative Evaluation 
         allInputs, allPreds, allGT, allPredsTresh = [], [], [], []
         for idx, (images, GT, resizedImg) in enumerate(self.testDataLoader):
-            images      = images.to(self.device)
+            images = images.to(self.device)
             predictions = self.model(images)
+
+            T_predictions = []
+            for transform in tta_transforms:
+                augmented_images_list = []
+                for img in images:
+                    img_numpy = img.permute(1, 2, 0).cpu().numpy()
+                    augmented_image = transform(image=img_numpy)["image"]
+                    augmented_images_list.append(augmented_image)
+
+                augmented_images = torch.stack(augmented_images_list).to(self.device)
+                predictions_augmented = self.model(augmented_images)
+                if isinstance(transform.transforms[0], alb.HorizontalFlip):
+                    predictions_augmented = torch.flip(predictions, dims=[3])
+                elif isinstance(transform.transforms[0], alb.VerticalFlip):
+                    predictions_augmented = torch.flip(predictions, dims=[2])
+                T_predictions.append(predictions_augmented)
+            pixel_probs = torch.stack(T_predictions, dim=0)
+            pixel_entropy = -torch.mean(pixel_probs * torch.log(pixel_probs + 1e-8) +(1 - pixel_probs) * torch.log(1 - pixel_probs + 1e-8), dim=0)
+            uncertainty_maps.append(pixel_entropy.cpu().numpy())
+
+            plt.figure(figsize=(224, 224))
+            plt.imshow(uncertainty_maps, cmap='hot', interpolation='nearest')
+            plt.colorbar(label='Entropy')
+            plt.title('Pixel-wise Uncertainty Map')
+            plt.axis('off')
+            plt.show()
 
             images, predictions = images.to('cpu'), predictions.to('cpu')
             pred_masks = (predictions.detach().numpy() >= 0.5).squeeze(1)
