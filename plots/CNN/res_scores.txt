@@ -1,6 +1,0 @@
-Mean score = 9237.148734177215
-Median score = 8454.0
-Mean dice score = 0.7595792836903135  
-Median dice score = 0.7905238844523244
-Mean iou score = 0.6288833696842334   
-Median iou score = 0.6536085304752308

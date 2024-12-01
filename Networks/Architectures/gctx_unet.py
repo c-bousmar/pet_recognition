@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from ..utils.gc_vit import gc_vit_tiny
+from Networks.utils.gc_vit import GCViTLayer
 
 
 class SE(nn.Module):
@@ -106,33 +107,44 @@ class Decoder(nn.Module):
 class GCTx_UNet(nn.Module):
     def __init__(self, params):
         super(GCTx_UNet, self).__init__()
-
         input_channels = params["MODEL"]["NB_CHANNEL"]
         num_classes = params["MODEL"]["NB_CLASSES"]
         encoder_stages = params["MODEL"]["ENCODER_STAGES"]
         decoder_stages = params["MODEL"]["DECODER_STAGES"]
-        self.gc_vit = gc_vit_tiny(embed_dim=64, num_heads=[2, 4, 8, 16], depths=[2, 2, 6, 2])
+
+        # Initialize GCViT model
+        self.gc_vit = gc_vit_tiny(pretrained=False, in_chans=input_channels)
+
+        # Stem layer
+        # self.patchify = nn.Sequential(
+        #     nn.Conv2d(input_channels, 64, kernel_size=3, stride=2, padding=1),
+        #     nn.Conv2d(64, 64, kernel_size=3, padding=1),
+        # )
 
         self.patchify = nn.Sequential(
-            nn.Conv2d(input_channels, encoder_stages[0], kernel_size=3, stride=2, padding=1),
-            nn.Conv2d(encoder_stages[0], encoder_stages[0], kernel_size=3, padding=1)
+            nn.Conv2d(in_channels=input_channels, out_channels=3, kernel_size=3, stride=2, padding=1),  # Output [8, 3, 112, 112]
+            nn.Conv2d(in_channels=3, out_channels=3, kernel_size=37, stride=37, padding=0),  # Output [8, 3, 3, 3]
         )
-        self.encoder = Encoder(encoder_stages, self.gc_vit_block)
-        self.bottleneck = Bottleneck(encoder_stages[-1], self.gc_vit_block)
-        self.decoder = Decoder(decoder_stages, encoder_stages[-1], self.gc_vit_block)
+
+        # Encoder, Bottleneck, Decoder
+        self.encoder = Encoder(encoder_stages, self.gc_vit)
+        self.bottleneck = Bottleneck(self.gc_vit)
+        self.decoder = Decoder(decoder_stages, encoder_stages[-1], self.gc_vit)
         self.final_upsample = nn.ConvTranspose2d(decoder_stages[-1], decoder_stages[-1], kernel_size=2, stride=2)
         self.output_layer = nn.Conv2d(decoder_stages[-1], num_classes, kernel_size=1)
 
-
     def forward(self, x):
-        x = self.patchify(x) # Stem
-
+        print(f"Input shape: {x.shape}")
+        x = self.patchify(x)
+        print(f"After patchify: {x.shape}")
         x, skips = self.encoder(x)
-
+        print(f"After encoder: {x.shape}")
         x = self.bottleneck(x)
-
+        print(f"After bottleneck: {x.shape}")
         x = self.decoder(x, skips)
-
+        print(f"After decoder: {x.shape}")
         x = self.final_upsample(x)
+        print(f"Final upsample: {x.shape}")
         return self.output_layer(x)
+
     

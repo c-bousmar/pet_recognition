@@ -3,12 +3,11 @@ import matplotlib.pyplot as plt
 
 from Dataset.dataLoader import *
 from Dataset.makeGraph import *
-from Networks.Architectures.basicNetwork import *
 
 import numpy as np
 
+from Networks.Architectures.basicNetwork import Net
 from Networks.Architectures.unet import UNet
-from Networks.Architectures.unet2 import UNet2
 from Networks.Architectures.pspn import PSPNet
 from Networks.Architectures.gctx_unet import GCTx_UNet
 
@@ -21,6 +20,7 @@ torch.manual_seed(2885)
 from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.optim
+import torch_optimizer
 
 EPSILON_OVERFITTING = 0.05
 EPSILON_ACCURACY = 0.01
@@ -71,14 +71,17 @@ class Network_Class:
         # -----------------------------------
         # self.model = Net(param).to(self.device)
         # self.model = PSPNet(param).to(self.device)
-        self.model = UNet2(param).to(self.device)
-        # self.model = GCTx_UNet(param).to(self.device)
+        # self.model = UNet(param).to(self.device)
+        self.model = GCTx_UNet(param).to(self.device)
         # -------------------
         # TODO TRAINING PARAMETERS
         # -------------------
         # self.criterion = nn.BCEWithLogitsLoss()
         self.criterion = nn.BCELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
+        # self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr)
+        # self.optimizer = torch_optimizer.Adahessian(self.model.parameters(), lr=self.lr)
+        # self.optimizer = torch_optimizer.Yogi(self.model.parameters(), lr=self.lr)
 
         # ----------------------------------------------------
         # DATASET INITIALISATION (from the dataLoader.py file)
@@ -116,13 +119,13 @@ class Network_Class:
             start_time = time.time()  # Start timing the epoch
             
             # Early stopping
-            if i > 0 and train_losses[-1] < 2000.0 and validations[-1] < 2500.0 and \
-                validations[-1] > train_losses[-1] + EPSILON_OVERFITTING and \
-                validations[-2] - validations[-1] < EPSILON_ACCURACY:
-                print(f"Early stopping caused by overfitting or no accuracy improvement.")
-                print(f"Loss difference = {validations[-1] - train_losses[-1]}")
-                print(f"Accuracy difference = {validations[-2] - validations[-1]}")
-                break
+            # if i > 0 and train_losses[-1] < 2000.0 and validations[-1] < 2500.0 and \
+            #     validations[-1] > train_losses[-1] + EPSILON_OVERFITTING and \
+            #     validations[-2] - validations[-1] < EPSILON_ACCURACY:
+            #     print(f"Early stopping caused by overfitting or no accuracy improvement.")
+            #     print(f"Loss difference = {validations[-1] - train_losses[-1]}")
+            #     print(f"Accuracy difference = {validations[-2] - validations[-1]}")
+            #     break
 
             self.model.train(True)
             size_train = len(self.trainDataLoader)
@@ -169,6 +172,9 @@ class Network_Class:
             # Print learning curves
             # Implement this...
             print(f"Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
+            # Open the file in append mode and write the epoch information
+            with open(os.path.join(self.resultsPath, 'res_epoch.txt'), 'a') as f:
+                f.write(f"Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}\n")
 
             # Save the model weights
             modelWts = copy.deepcopy(self.model.state_dict())
@@ -180,14 +186,14 @@ class Network_Class:
         avg_time = total_time / self.epoch
         print(f"Average time per epoch: {avg_time:.2f} seconds")
 
-        plt.plot(range(1, self.epoch + 1), train_losses, label='Train Loss')
-        plt.plot(range(1, self.epoch + 1), validations, label='Validation Loss')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.title('Train and Validation Loss Curves')
-        plt.legend()
-        plt.show()
-        plt.savefig(self.resultsPath + '/Plots/learning_curves.png')
+        # plt.plot(range(1, self.epoch + 1), train_losses, label='Train Loss')
+        # plt.plot(range(1, self.epoch + 1), validations, label='Validation Loss')
+        # plt.xlabel('Epoch')
+        # plt.ylabel('Loss')
+        # plt.title('Train and Validation Loss Curves')
+        # plt.legend()
+        # plt.show()
+        # plt.savefig(self.resultsPath + '/Plots/learning_curves.png')
 
 
 
@@ -232,12 +238,42 @@ class Network_Class:
         showPredictions(allInputs, allPreds, allGT, allPredsTresh, self.resultsPath)
 
         # Quantitative Evaluation
+        mean_score = np.mean(scores)
+        median_score = np.median(scores)
+
         total_pixels = self.image_size * self.image_size
         pixel_accuracies = [(score / total_pixels) * 100 for score in scores]
-        print(f'Mean score = {np.mean(scores)}\nMedian score = {np.median(scores)}')
-        print(f'Mean Pixel Accuracy = {100.0 - np.mean(pixel_accuracies):.2f}%\nMedian Pixel Accuracy = {100.0 - np.median(pixel_accuracies):.2f}%')
-        print(f'Mean dice score = {np.mean(dice_scores)}\nMedian dice score = {np.median(dice_scores)}')
-        print(f'Mean iou score = {np.mean(iou_scores)}\nMedian iou score = {np.median(iou_scores)}')
+        mean_pixel_accuracy = 100.0 - np.mean(pixel_accuracies)
+        median_pixel_accuracy = 100.0 - np.median(pixel_accuracies)
+        std_pixel_accuracy = np.std(pixel_accuracies)
+
+        mean_dice_score = np.mean(dice_scores)
+        median_dice_score = np.median(dice_scores)
+        std_dice_score = np.std(dice_scores)
+
+        mean_iou_score = np.mean(iou_scores)
+        median_iou_score = np.median(iou_scores)
+        std_iou_score = np.std(iou_scores)
+
+        # Display the results
+        print(f'Mean score = {mean_score}\nMedian score = {median_score}')
+        print(f'Mean Pixel Accuracy = {mean_pixel_accuracy}%\nMedian Pixel Accuracy = {median_pixel_accuracy}%\nSTD Pixel Accuracy = {std_pixel_accuracy}%')
+        print(f'Mean dice score = {mean_dice_score}\nMedian dice score = {median_dice_score}\nSTD dice score = {std_dice_score}')
+        print(f'Mean IoU score = {mean_iou_score}\nMedian IoU score = {median_iou_score}\nSTD IoU score = {std_iou_score}')
+        
+        # Write to the file in append mode
+        with open(os.path.join(self.resultsPath, 'res_scores.txt'), 'a') as f:
+            f.write(f"Mean score = {mean_score}\n")
+            f.write(f"Median score = {median_score}\n")
+            f.write(f"Mean Pixel Accuracy = {mean_pixel_accuracy:.2f}%\n")
+            f.write(f"Median Pixel Accuracy = {median_pixel_accuracy:.2f}%\n")
+            f.write(f"STD Pixel Accuracy = {std_pixel_accuracy:.2f}%\n")
+            f.write(f"Mean dice score = {mean_dice_score}\n")
+            f.write(f"Median dice score = {median_dice_score}\n")
+            f.write(f"STD dice score = {std_dice_score}\n")
+            f.write(f"Mean IoU score = {mean_iou_score}\n")
+            f.write(f"Median IoU score = {median_iou_score}\n")
+            f.write(f"STD IoU score = {std_iou_score}\n")
     
     def dice_coefficient(self, pred_mask, gt_mask):
         intersection = np.sum(pred_mask * gt_mask)
