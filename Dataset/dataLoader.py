@@ -94,7 +94,6 @@ class OxfordPetDataset(Dataset):
 def getTransforms_train(param): 
     imgTransformsList = [
         #alb.HorizontalFlip(p=0.5),
-        #alb.VerticalFlip(p=0.5),
         #alb.Rotate(limit=30, p=0.5),
         alb.Resize(height = int(param["DATASET"]["RESIZE_SHAPE"].split("x")[0]),
                                     width  = int(param["DATASET"]["RESIZE_SHAPE"].split("x")[1])), 

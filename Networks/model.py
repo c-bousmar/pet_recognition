@@ -95,7 +95,8 @@ class Network_Class:
     # LOAD PRETRAINED WEIGHTS (to run evaluation without retraining the model...)
     # ---------------------------------------------------------------------------
     def loadWeights(self, epoch_number): 
-        self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e{epoch_number}.pkl', weights_only=True))
+        #self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e{epoch_number}.pkl', weights_only=True))
+        self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts.pkl', weights_only=True))
 
     # -----------------------------------
     # TRAINING LOOP (fool implementation)
