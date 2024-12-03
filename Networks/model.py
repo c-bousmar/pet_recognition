@@ -212,6 +212,7 @@ class Network_Class:
         uncertainty_maps = []
 
         tta_transforms = [
+            alb.Compose([alb.pytorch.transforms.ToTensorV2()]),
             alb.Compose([alb.HorizontalFlip(p=1), alb.pytorch.transforms.ToTensorV2()]),
             alb.Compose([alb.VerticalFlip(p=1), alb.pytorch.transforms.ToTensorV2()]),
         ]
@@ -224,30 +225,39 @@ class Network_Class:
             predictions = self.model(images)
 
             T_predictions = []
-            for transform in tta_transforms:
-                augmented_images_list = []
-                for img in images:
+            T_entropy = []
+            for i, img in enumerate(images):
+                for transform in tta_transforms:
                     img_numpy = img.permute(1, 2, 0).cpu().numpy()
-                    augmented_image = transform(image=img_numpy)["image"]
-                    augmented_images_list.append(augmented_image)
+                    augmented_image = transform(image=img_numpy)["image"].to(self.device)
 
-                augmented_images = torch.stack(augmented_images_list).to(self.device)
-                predictions_augmented = self.model(augmented_images)
-                if isinstance(transform.transforms[0], alb.HorizontalFlip):
-                    predictions_augmented = torch.flip(predictions, dims=[3])
-                elif isinstance(transform.transforms[0], alb.VerticalFlip):
-                    predictions_augmented = torch.flip(predictions, dims=[2])
-                T_predictions.append(predictions_augmented)
-            pixel_probs = torch.stack(T_predictions, dim=0)
-            pixel_entropy = -torch.mean(pixel_probs * torch.log(pixel_probs + 1e-8) +(1 - pixel_probs) * torch.log(1 - pixel_probs + 1e-8), dim=0)
-            uncertainty_maps.append(pixel_entropy.cpu().numpy())
+                    predictions_augmented = self.model(augmented_image.unsqueeze(0))
+                    predictions_augmented = predictions_augmented.to('cpu')
+                    #predictions_augmented = torch.tensor((predictions_augmented.detach().numpy() >= 0.5).astype(int))
 
-            plt.figure(figsize=(224, 224))
-            plt.imshow(uncertainty_maps, cmap='hot', interpolation='nearest')
-            plt.colorbar(label='Entropy')
-            plt.title('Pixel-wise Uncertainty Map')
-            plt.axis('off')
-            plt.show()
+                    if isinstance(transform.transforms[0], alb.HorizontalFlip):
+                        predictions_augmented = torch.flip(predictions_augmented, dims=[3])
+                    elif isinstance(transform.transforms[0], alb.VerticalFlip):
+                        predictions_augmented = torch.flip(predictions_augmented, dims=[2])
+
+                    T_predictions.append(predictions_augmented)
+                for pixel_probs in T_predictions:
+                    pixel_entropy = -pixel_probs * torch.log(pixel_probs + 1e-8) - (1 - pixel_probs) * torch.log( 1 - pixel_probs + 1e-8)
+                    T_entropy.append(pixel_entropy)
+
+                pixels_entropy = torch.stack(T_entropy, dim=0)
+                pixels_entropy = pixels_entropy.to('cpu')
+                pixels_entropy = torch.mean(pixels_entropy, dim=0)
+
+                plt.figure(figsize=(10, 10))
+                plt.imshow(np.squeeze(pixels_entropy.data.numpy()), cmap='hot', interpolation='nearest')
+                plt.colorbar(label='Entropy')
+                plt.title('Pixel-wise Uncertainty Map')
+                plt.axis('off')
+                filePath = os.path.join(self.resultsPath, "Entropy", str(i))
+                createFolder(os.path.join(self.resultsPath, "Entropy"))
+                plt.savefig(filePath)
+                plt.close()
 
             images, predictions = images.to('cpu'), predictions.to('cpu')
             pred_masks = (predictions.detach().numpy() >= 0.5).squeeze(1)
