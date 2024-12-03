@@ -10,7 +10,8 @@ import numpy as np
 from Networks.Architectures.unet import UNet
 from Networks.Architectures.unet2 import UNet2
 from Networks.Architectures.pspn import PSPNet
-from Networks.Architectures.gctx_unet import GCTx_UNet
+# from Networks.Architectures.gctx_unet import GCTx_UNet
+from Networks.Architectures.maskrcnn import MaskRCNN
 
 np.random.seed(2885)
 import os
@@ -71,8 +72,10 @@ class Network_Class:
         # -----------------------------------
         # self.model = Net(param).to(self.device)
         # self.model = PSPNet(param).to(self.device)
-        self.model = UNet2(param).to(self.device)
+        # self.model = UNet2(param).to(self.device)
         # self.model = GCTx_UNet(param).to(self.device)
+        self.model = MaskRCNN(param).to(self.device)
+        # import ipdb; ipdb.set_trace()
         # -------------------
         # TODO TRAINING PARAMETERS
         # -------------------
