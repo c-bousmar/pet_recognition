@@ -72,6 +72,23 @@ def singlePrediction(img, pred, GT, predTresh, filePath):
     plt.savefig(filePath)
     plt.close()
 
+def singlePredictionEntropy(img, pred, filePath):
+    figure, ax = plt.subplots(1, 2, figsize=(15, 5))
+
+    ax[0].imshow(img.transpose((1, 2, 0)))
+    ax[0].set_title("Input")
+    ax[0].set_axis_off()
+
+    im = ax[1].imshow(np.squeeze(pred) * 255, cmap='hot', interpolation="nearest")
+    ax[1].set_title("Pixel-wise Uncertainty Map")
+    ax[1].set_axis_off()
+
+    cbar = figure.colorbar(im, ax=ax[1], orientation='vertical', label='Entropy')
+
+    plt.tight_layout()
+    plt.savefig(filePath)
+    plt.close()
+
 # --------------------------------------------------------------------------------
 # DISPLAY ALL IMAGES AND PREDICTIONS
 # INPUTS: 
@@ -89,5 +106,9 @@ def showPredictions(allInputs, allPreds, allGT, allPredsTresh, resultPath):
         if idx > 30: 
             break
         idx += 1
+def showEntropy(img, pred, resultPath, idx):
+    filePath = os.path.join(resultPath, "Entropy", str(idx))
+    createFolder(os.path.join(resultPath, "Entropy"))
+    singlePredictionEntropy(img, pred,filePath)
 
     

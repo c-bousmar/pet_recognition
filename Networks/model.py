@@ -219,16 +219,19 @@ class Network_Class:
 
         
         # Qualitative Evaluation 
-        allInputs, allPreds, allGT, allPredsTresh = [], [], [], []
+        allInputs, allPreds, allGT, allPredsTresh, allPredsEntropy = [], [], [], [],[]
         for idx, (images, GT, resizedImg) in enumerate(self.testDataLoader):
             images = images.to(self.device)
             predictions = self.model(images)
 
-            T_predictions = []
-            T_entropy = []
-            for i, img in enumerate(images):
+            allInputs.extend(resizedImg.data.numpy())
+
+            for i,img in enumerate(images):
+                img = img.to('cpu')
+                T_predictions = []
+                T_entropy = []
                 for transform in tta_transforms:
-                    img_numpy = img.permute(1, 2, 0).cpu().numpy()
+                    img_numpy = img.permute(1, 2, 0).numpy()
                     augmented_image = transform(image=img_numpy)["image"].to(self.device)
 
                     predictions_augmented = self.model(augmented_image.unsqueeze(0))
@@ -248,22 +251,11 @@ class Network_Class:
                 pixels_entropy = torch.stack(T_entropy, dim=0)
                 pixels_entropy = pixels_entropy.to('cpu')
                 pixels_entropy = torch.mean(pixels_entropy, dim=0)
-
-                plt.figure(figsize=(10, 10))
-                plt.imshow(np.squeeze(pixels_entropy.data.numpy()), cmap='hot', interpolation='nearest')
-                plt.colorbar(label='Entropy')
-                plt.title('Pixel-wise Uncertainty Map')
-                plt.axis('off')
-                filePath = os.path.join(self.resultsPath, "Entropy", str(i))
-                createFolder(os.path.join(self.resultsPath, "Entropy"))
-                plt.savefig(filePath)
-                plt.close()
-
+                showEntropy(img.data.numpy(), pixels_entropy.detach().numpy(), self.resultsPath, i)
             images, predictions = images.to('cpu'), predictions.to('cpu')
             pred_masks = (predictions.detach().numpy() >= 0.5).squeeze(1)
 
 
-            allInputs.extend(resizedImg.data.numpy())
             allPreds.extend(predictions.data.numpy())
             allGT.extend(GT.data.numpy())
             allPredsTresh.extend(pred_masks)
