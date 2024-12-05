@@ -73,16 +73,20 @@ def singlePrediction(img, pred, GT, predTresh, filePath):
     plt.close()
 
 def singlePredictionEntropy(img, pred, filePath):
+    # Création des sous-graphiques
     figure, ax = plt.subplots(1, 2, figsize=(15, 5))
 
+    # Afficher l'image originale
     ax[0].imshow(img.transpose((1, 2, 0)))
-    ax[0].set_title("Input")
-    ax[0].set_axis_off()
+    ax[0].set_title("Original Image")
+    ax[0].axis('off')
 
-    im = ax[1].imshow(np.squeeze(pred) * 255, cmap='hot', interpolation="nearest")
-    ax[1].set_title("Pixel-wise Uncertainty Map")
-    ax[1].set_axis_off()
+    # Afficher la carte d'entropie
+    im = ax[1].imshow(np.squeeze(pred), cmap='hot', interpolation='nearest')
+    ax[1].set_title("Pixel-Wise Entropy Map")
+    ax[1].axis('off')
 
+    # Ajouter une barre de couleur à la carte d'entropie
     cbar = figure.colorbar(im, ax=ax[1], orientation='vertical', label='Entropy')
 
     plt.tight_layout()
@@ -110,5 +114,7 @@ def showEntropy(img, pred, resultPath, idx):
     filePath = os.path.join(resultPath, "Entropy", str(idx))
     createFolder(os.path.join(resultPath, "Entropy"))
     singlePredictionEntropy(img, pred,filePath)
+    if idx > 30:
+        return
 
     

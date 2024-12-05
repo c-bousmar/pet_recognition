@@ -101,7 +101,7 @@ class Network_Class:
     # ---------------------------------------------------------------------------
     def loadWeights(self, epoch_number): 
         #self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e{epoch_number}.pkl', weights_only=True))
-        self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts.pkl', weights_only=True))
+        self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e10.pkl', weights_only=True))
 
     # -----------------------------------
     # TRAINING LOOP (fool implementation)
@@ -224,8 +224,6 @@ class Network_Class:
             images = images.to(self.device)
             predictions = self.model(images)
 
-            allInputs.extend(resizedImg.data.numpy())
-
             for i,img in enumerate(images):
                 img = img.to('cpu')
                 T_predictions = []
@@ -251,11 +249,11 @@ class Network_Class:
                 pixels_entropy = torch.stack(T_entropy, dim=0)
                 pixels_entropy = pixels_entropy.to('cpu')
                 pixels_entropy = torch.mean(pixels_entropy, dim=0)
-                showEntropy(img.data.numpy(), pixels_entropy.detach().numpy(), self.resultsPath, i)
+                showEntropy(resizedImg[i].data.numpy(), pixels_entropy.detach().numpy(), self.resultsPath, i)
             images, predictions = images.to('cpu'), predictions.to('cpu')
             pred_masks = (predictions.detach().numpy() >= 0.5).squeeze(1)
 
-
+            allInputs.extend(resizedImg.data.numpy())
             allPreds.extend(predictions.data.numpy())
             allGT.extend(GT.data.numpy())
             allPredsTresh.extend(pred_masks)
