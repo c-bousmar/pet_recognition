@@ -93,6 +93,24 @@ def singlePredictionEntropy(img, pred, filePath):
     plt.savefig(filePath)
     plt.close()
 
+def singleTransformation(imgs, preds, filePath):
+    # Création des sous-graphiques
+    titles = ["Original", "Horizontal Flip", "Vertical Flip", "+90° Rotation", "-90° Rotation", "Brighten", "Darken", "Add Noise", "Grayscale", "Blur"]
+    figure, ax = plt.subplots(2, len(titles), figsize=(15, 5))
+
+
+    for i, img in enumerate(imgs):
+        ax[0, i].imshow(img.transpose((1, 2, 0)))
+        ax[0, i].set_title(titles[i])
+        ax[0, i].set_axis_off()
+        ax[1, i].imshow(np.squeeze(preds[i])*255, interpolation="nearest")
+        ax[1, i].set_title("Prediction")
+        ax[1, i].set_axis_off()
+
+    plt.tight_layout()
+    plt.savefig(filePath)
+    plt.close()
+
 # --------------------------------------------------------------------------------
 # DISPLAY ALL IMAGES AND PREDICTIONS
 # INPUTS: 
@@ -114,6 +132,12 @@ def showEntropy(img, pred, resultPath, idx):
     filePath = os.path.join(resultPath, "Entropy", str(idx))
     createFolder(os.path.join(resultPath, "Entropy"))
     singlePredictionEntropy(img, pred,filePath)
+    if idx > 30:
+        return
+def showTransformations(imgs, preds, resultPath, idx):
+    filePath = os.path.join(resultPath, "Transformations", str(idx))
+    createFolder(os.path.join(resultPath, "Transformations"))
+    singleTransformation(imgs, preds,filePath)
     if idx > 30:
         return
 

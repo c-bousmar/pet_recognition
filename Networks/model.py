@@ -101,7 +101,7 @@ class Network_Class:
     # ---------------------------------------------------------------------------
     def loadWeights(self, epoch_number): 
         #self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e{epoch_number}.pkl', weights_only=True))
-        self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e10.pkl', weights_only=True))
+        self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e20.pkl', weights_only=True))
 
     # -----------------------------------
     # TRAINING LOOP (fool implementation)
@@ -213,24 +213,41 @@ class Network_Class:
 
         tta_transforms = [
             alb.Compose([alb.pytorch.transforms.ToTensorV2()]),
-            alb.Compose([alb.HorizontalFlip(p=1), alb.pytorch.transforms.ToTensorV2()]),
-            alb.Compose([alb.VerticalFlip(p=1), alb.pytorch.transforms.ToTensorV2()]),
+            alb.Compose([alb.HorizontalFlip(p=1), alb.pytorch.transforms.ToTensorV2()]), # Horizontal Flip
+            alb.Compose([alb.VerticalFlip(p=1), alb.pytorch.transforms.ToTensorV2()]), # Vertical Flip
+            alb.Compose([alb.Rotate(limit=(90, 90), p=1), alb.pytorch.transforms.ToTensorV2()]),  # +90 Degrees Rotation
+            alb.Compose([alb.Rotate(limit=(-90, -90), p=1), alb.pytorch.transforms.ToTensorV2()]),  # -90 Degrees Rotation
+            alb.Compose([alb.RandomBrightnessContrast(brightness_limit=(0.4, 0.4), contrast_limit=0, p=1), alb.pytorch.transforms.ToTensorV2()]),  # Brighten
+            alb.Compose([alb.RandomBrightnessContrast(brightness_limit=(-0.4, -0.2), contrast_limit=0, p=1), alb.pytorch.transforms.ToTensorV2()]),  # Darken
+            alb.Compose([alb.GaussNoise(var_limit=2.0, p=1), alb.pytorch.transforms.ToTensorV2()]),  # Add Noise
+            alb.Compose([alb.ToGray(p=1), alb.pytorch.transforms.ToTensorV2()]),  # Grayscale
+            alb.Compose([alb.GaussianBlur(blur_limit=(3, 5), p=1), alb.pytorch.transforms.ToTensorV2()]),  # Blur
         ]
 
         
         # Qualitative Evaluation 
         allInputs, allPreds, allGT, allPredsTresh, allPredsEntropy = [], [], [], [],[]
         for idx, (images, GT, resizedImg) in enumerate(self.testDataLoader):
+            print(idx)
             images = images.to(self.device)
             predictions = self.model(images)
 
             for i,img in enumerate(images):
                 img = img.to('cpu')
+                transformation_imgs = []
+                transformation_preds = []
                 T_predictions = []
                 T_entropy = []
                 for transform in tta_transforms:
                     img_numpy = img.permute(1, 2, 0).numpy()
                     augmented_image = transform(image=img_numpy)["image"].to(self.device)
+                    
+                    # Save normalized image for the plot
+                    t = augmented_image.data.numpy()
+                    if isinstance(transform.transforms[0], alb.RandomBrightnessContrast):
+                        transformation_imgs.append(np.clip(((t * (img_numpy.max()+0.4 - (img_numpy.min()+0.4)) + img_numpy.min()+0.4) - img_numpy.min()) / (img_numpy.max() - img_numpy.min()), None, 1))
+                    else:
+                        transformation_imgs.append((t - img_numpy.min()) / (img_numpy.max() - img_numpy.min()))
 
                     predictions_augmented = self.model(augmented_image.unsqueeze(0))
                     predictions_augmented = predictions_augmented.to('cpu')
@@ -240,7 +257,14 @@ class Network_Class:
                         predictions_augmented = torch.flip(predictions_augmented, dims=[3])
                     elif isinstance(transform.transforms[0], alb.VerticalFlip):
                         predictions_augmented = torch.flip(predictions_augmented, dims=[2])
+                    elif isinstance(transform.transforms[0], alb.Rotate):
+                        angle = transform.transforms[0].limit
+                        if angle == (90, 90):
+                            predictions_augmented = torch.rot90(predictions_augmented, k=-1, dims=[2, 3])
+                        elif angle == (-90, -90):
+                            predictions_augmented = torch.rot90(predictions_augmented, k=1, dims=[2, 3])
 
+                    transformation_preds.append(predictions_augmented.data.numpy())
                     T_predictions.append(predictions_augmented)
                 for pixel_probs in T_predictions:
                     pixel_entropy = -pixel_probs * torch.log(pixel_probs + 1e-8) - (1 - pixel_probs) * torch.log( 1 - pixel_probs + 1e-8)
@@ -250,6 +274,8 @@ class Network_Class:
                 pixels_entropy = pixels_entropy.to('cpu')
                 pixels_entropy = torch.mean(pixels_entropy, dim=0)
                 showEntropy(resizedImg[i].data.numpy(), pixels_entropy.detach().numpy(), self.resultsPath, i)
+                showTransformations(transformation_imgs, transformation_preds, self.resultsPath, i)
+
             images, predictions = images.to('cpu'), predictions.to('cpu')
             pred_masks = (predictions.detach().numpy() >= 0.5).squeeze(1)
 
