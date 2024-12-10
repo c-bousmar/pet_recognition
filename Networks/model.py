@@ -67,6 +67,7 @@ class Network_Class:
         self.lr            = param["TRAINING"]["LEARNING_RATE"]
         self.batchSize     = param["TRAINING"]["BATCH_SIZE"]
         self.image_size    = param["EVALUATE"]["IMAGE_SIZE"]
+        self.fold          = 5
 
         # -----------------------------------
         # NETWORK ARCHITECTURE INITIALISATION
@@ -100,8 +101,8 @@ class Network_Class:
     # LOAD PRETRAINED WEIGHTS (to run evaluation without retraining the model...)
     # ---------------------------------------------------------------------------
     def loadWeights(self, epoch_number): 
-        #self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e{epoch_number}.pkl', weights_only=True))
-        self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e20.pkl', weights_only=True))
+        self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e{epoch_number}.pkl', weights_only=True))
+        # self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e20.pkl', weights_only=True))
 
     # -----------------------------------
     # TRAINING LOOP (fool implementation)
@@ -110,83 +111,95 @@ class Network_Class:
         # TODO: You must write the loop to train and validate your model for a given number of epoch. At
         #  the end of the training, you are asked to print your train and validation loss curves into a graph.
         # train for a given number of epochs
-        # for i in range(self.epoch):
-        #    print("Loss at i-th epoch: ", str(np.random.random_sample()))
-        #    modelWts = copy.deepcopy(self.model.state_dict())
-        train_losses = []
-        validations = []
-        total_time = 0  # Initialize total time counter
         #self.loadWeights()
-        for i in range(self.epoch):
-            start_time = time.time()  # Start timing the epoch
-            
-            # Early stopping
-            # if i > 0 and train_losses[-1] < 2000.0 and validations[-1] < 2500.0 and \
-            #     validations[-1] > train_losses[-1] + EPSILON_OVERFITTING and \
-            #     validations[-2] - validations[-1] < EPSILON_ACCURACY:
-            #     print(f"Early stopping caused by overfitting or no accuracy improvement.")
-            #     print(f"Loss difference = {validations[-1] - train_losses[-1]}")
-            #     print(f"Accuracy difference = {validations[-2] - validations[-1]}")
-            #     break
 
-            self.model.train(True)
-            size_train = len(self.trainDataLoader)
-            size_val = len(self.valDataLoader)
-            train_loss = 0
-            val_loss = 0
-            for batch_idx, (images, masks, resizedImg) in enumerate(self.trainDataLoader):
-                # Get images and associated mask
-                images, masks = images.to(self.device), masks.to(self.device),
+        wghtsPath  = self.resultsPath + '/_Weights/'
+        createFolder(wghtsPath)
 
-                # Zero your gradients for every batch!
-                self.optimizer.zero_grad()
+        best_val_loss = float('inf')
+        fold_results = []
 
-                # Make predictions for this batch
-                predictions = self.model(images)
-                predictions = predictions.squeeze(1)
+        for fold in range(self.fold):
+            print(f"Starting Fold {fold + 1}/{5}")
+            train_losses = []
+            validations = []
+            total_time = 0  # Initialize total time counter
 
-                # Compute the loss and its gradients
-                loss = self.criterion(predictions, masks)
-                loss.backward()
+            for i in range(self.epoch):
+                print(f"Starting Epoch {i + 1}/{self.epoch}")
+                start_time = time.time()  # Start timing the epoch
+                
+                # Early stopping
+                # if i > 0 and train_losses[-1] < 2000.0 and validations[-1] < 2500.0 and \
+                #     validations[-1] > train_losses[-1] + EPSILON_OVERFITTING and \
+                #     validations[-2] - validations[-1] < EPSILON_ACCURACY:
+                #     print(f"Early stopping caused by overfitting or no accuracy improvement.")
+                #     print(f"Loss difference = {validations[-1] - train_losses[-1]}")
+                #     print(f"Accuracy difference = {validations[-2] - validations[-1]}")
+                #     break
 
-                # Adjust learning weights
-                self.optimizer.step()
+                self.model.train(True)
+                size_train = len(self.trainDataLoader)
+                size_val = len(self.valDataLoader)
+                train_loss = 0
+                val_loss = 0
+                for batch_idx, (images, masks, resizedImg) in enumerate(self.trainDataLoader):
+                    # Get images and associated mask
+                    images, masks = images.to(self.device), masks.to(self.device),
 
-                train_loss += loss.item()
-            train_loss /= size_train
-            train_losses.append(train_loss)
+                    # Zero your gradients for every batch!
+                    self.optimizer.zero_grad()
 
-            self.model.eval()
-            with torch.no_grad():
-                for batch_idx, (images, masks, resizedImg) in enumerate(self.valDataLoader):
-                    images, masks = images.to(self.device), masks.to(self.device)
+                    # Make predictions for this batch
                     predictions = self.model(images)
                     predictions = predictions.squeeze(1)
+
+                    # Compute the loss and its gradients
                     loss = self.criterion(predictions, masks)
-                    val_loss += loss.item()
-                val_loss /= size_val
-                validations.append(val_loss)
+                    loss.backward()
 
-            # End timing the epoch
-            epoch_time = time.time() - start_time
-            total_time += epoch_time
+                    # Adjust learning weights
+                    self.optimizer.step()
 
-            # Print learning curves
-            # Implement this...
-            print(f"Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
-            # Open the file in append mode and write the epoch information
-            with open(os.path.join(self.resultsPath, 'res_epoch.txt'), 'a') as f:
-                f.write(f"Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}\n")
+                    train_loss += loss.item()
+                train_loss /= size_train
+                train_losses.append(train_loss)
 
-            # Save the model weights
-            modelWts = copy.deepcopy(self.model.state_dict())
-            wghtsPath  = self.resultsPath + '/_Weights/'
-            createFolder(wghtsPath)
-            torch.save(modelWts, wghtsPath + f'/wghts_e{i+1}.pkl')
+                self.model.eval()
+                with torch.no_grad():
+                    for batch_idx, (images, masks, resizedImg) in enumerate(self.valDataLoader):
+                        images, masks = images.to(self.device), masks.to(self.device)
+                        predictions = self.model(images)
+                        predictions = predictions.squeeze(1)
+                        loss = self.criterion(predictions, masks)
+                        val_loss += loss.item()
+                    val_loss /= size_val
+                    validations.append(val_loss)
 
-        # Print the average epoch time
-        avg_time = total_time / self.epoch
-        print(f"Average time per epoch: {avg_time:.2f} seconds")
+                # End timing the epoch
+                epoch_time = time.time() - start_time
+                total_time += epoch_time
+
+                # Print learning curves
+                print(f"Fold{fold+1}/{self.fold}, Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
+                with open(os.path.join(self.resultsPath, 'res_epoch.txt'), 'a') as f:
+                    f.write(f"Fold{fold+1}/{self.fold}, Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}\n")
+
+                # Save the model weights
+                # modelWts = copy.deepcopy(self.model.state_dict())
+                # torch.save(modelWts, wghtsPath + f'/wghts_e{i+1}.pkl')
+
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
+                    best_model_wts = copy.deepcopy(self.model.state_dict())
+
+            # Print the average epoch time
+            avg_time = total_time / self.epoch
+            print(f"Average time per epoch: {avg_time:.2f} seconds. Total fold time: {total_time:.2f} seconds.")
+
+            fold_results.append({'fold': fold + 1, 'train_losses': train_losses, 'val_losses': validations})
+
+        torch.save(best_model_wts, wghtsPath + f'/wghts_best.pkl')
 
         # plt.plot(range(1, self.epoch + 1), train_losses, label='Train Loss')
         # plt.plot(range(1, self.epoch + 1), validations, label='Validation Loss')
