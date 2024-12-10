@@ -3,4 +3,14 @@ Median score = 3325.5
 Mean dice score = 0.8769639702184369
 Median dice score = 0.910355533830264
 Mean iou score = 0.7942747696726749
-Median iou score = 0.8354610769633165
+Median iou score = 0.8354610769633165Mean score = 4998.514466546112
+Median score = 3583.5
+Mean Pixel Accuracy = 90.04%
+Median Pixel Accuracy = 92.86%
+STD Pixel Accuracy = 8.70%
+Mean dice score = 0.85595226213394
+Median dice score = 0.9020121150042559
+STD dice score = 0.13904748594834213
+Mean IoU score = 0.7683232425544215
+Median IoU score = 0.8215137411638862
+STD IoU score = 0.1691393979226014
