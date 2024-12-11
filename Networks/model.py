@@ -68,19 +68,20 @@ class Network_Class:
         self.batchSize     = param["TRAINING"]["BATCH_SIZE"]
         self.image_size    = param["EVALUATE"]["IMAGE_SIZE"]
         self.fold          = 5
+        self.param         = param
 
         # -----------------------------------
         # NETWORK ARCHITECTURE INITIALISATION
         # -----------------------------------
         # self.model = Net(param).to(self.device)
-        #self.model = PSPNet(param).to(self.device)
-        self.model = UNet(param).to(self.device)
+        self.model = PSPNet(param).to(self.device)
+        # self.model = UNet(param).to(self.device)
         #self.model = GCTx_UNet(param).to(self.device)
         # -------------------
         # TODO TRAINING PARAMETERS
         # -------------------
-        #self.criterion = nn.BCEWithLogitsLoss()
-        self.criterion = nn.BCELoss()
+        self.criterion = nn.BCEWithLogitsLoss()
+        # self.criterion = nn.BCELoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
         # self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr)
         # self.optimizer = torch_optimizer.Adahessian(self.model.parameters(), lr=self.lr)
@@ -101,7 +102,8 @@ class Network_Class:
     # LOAD PRETRAINED WEIGHTS (to run evaluation without retraining the model...)
     # ---------------------------------------------------------------------------
     def loadWeights(self, epoch_number): 
-        self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e{epoch_number}.pkl', weights_only=True))
+        # self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e{epoch_number}.pkl', weights_only=True))
+        self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_best.pkl', weights_only=True))
         # self.model.load_state_dict(torch.load(self.resultsPath + f'/_Weights/wghts_e20.pkl', weights_only=True))
 
     # -----------------------------------
@@ -120,13 +122,13 @@ class Network_Class:
         fold_results = []
 
         for fold in range(self.fold):
-            print(f"Starting Fold {fold + 1}/{5}")
             train_losses = []
             validations = []
             total_time = 0  # Initialize total time counter
 
+            self.model = PSPNet(self.param).to(self.device)
+
             for i in range(self.epoch):
-                print(f"Starting Epoch {i + 1}/{self.epoch}")
                 start_time = time.time()  # Start timing the epoch
                 
                 # Early stopping
@@ -182,12 +184,12 @@ class Network_Class:
 
                 # Print learning curves
                 print(f"Fold{fold+1}/{self.fold}, Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
-                with open(os.path.join(self.resultsPath, 'res_epoch.txt'), 'a') as f:
+                with open(os.path.join(self.resultsPath, 'res_epochs.txt'), 'a') as f:
                     f.write(f"Fold{fold+1}/{self.fold}, Epoch {i + 1}/{self.epoch}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}\n")
 
                 # Save the model weights
-                # modelWts = copy.deepcopy(self.model.state_dict())
-                # torch.save(modelWts, wghtsPath + f'/wghts_e{i+1}.pkl')
+                modelWts = copy.deepcopy(self.model.state_dict())
+                torch.save(modelWts, wghtsPath + f'/wghts_f{fold+1}_e{i+1}.pkl')
 
                 if val_loss < best_val_loss:
                     best_val_loss = val_loss
@@ -200,6 +202,10 @@ class Network_Class:
             fold_results.append({'fold': fold + 1, 'train_losses': train_losses, 'val_losses': validations})
 
         torch.save(best_model_wts, wghtsPath + f'/wghts_best.pkl')
+        rmses = [np.sqrt(loss) for loss in [fold['val_losses'][-1] for fold in fold_results]]
+        print(f"Mean RMSE: {np.mean(rmses)}.4f")
+        print(f"STD RMSE: {np.std(rmses)}.4f")
+        print(fold_results)
 
         # plt.plot(range(1, self.epoch + 1), train_losses, label='Train Loss')
         # plt.plot(range(1, self.epoch + 1), validations, label='Validation Loss')
@@ -256,7 +262,7 @@ class Network_Class:
                     augmented_image = transform(image=img_numpy)["image"].to(self.device)
                     
                     # Save normalized image for the plot
-                    t = augmented_image.data.numpy()
+                    t = augmented_image.to('cpu').data.numpy()
                     if isinstance(transform.transforms[0], alb.RandomBrightnessContrast):
                         transformation_imgs.append(np.clip(((t * (img_numpy.max()+0.4 - (img_numpy.min()+0.4)) + img_numpy.min()+0.4) - img_numpy.min()) / (img_numpy.max() - img_numpy.min()), None, 1))
                     else:

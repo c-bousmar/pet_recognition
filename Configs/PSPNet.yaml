@@ -12,8 +12,8 @@ MODEL:
   OUT_CHANNELS: 2048
   
 TRAINING: 
-  LEARNING_RATE: 0.01
-  EPOCH: 3
+  LEARNING_RATE: 0.001
+  EPOCH: 15
   BATCH_SIZE: 8
   # cpu (to run on cpu) or cuda (to run on gpu)
   DEVICE: cuda

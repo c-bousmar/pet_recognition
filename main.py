@@ -53,8 +53,8 @@ def main(parser):
     # ------------------
     # 3. TRAIN THE MODEL  
     # ------------------
-    #print(colored('Start to train the network', 'red'))
-    #myNetwork.train()
+    # print(colored('Start to train the network', 'red'))
+    # myNetwork.train()
     # print(colored('The network is trained', 'red'))
     
     # ---------------------
