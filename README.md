@@ -1,4 +1,4 @@
-# Pet Recognition
+# Comparison and analysis of segmentation models for pet recognition
 LELEC2885 - Image processing and computer vision
 
 
